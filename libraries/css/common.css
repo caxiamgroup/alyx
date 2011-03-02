@@ -1,0 +1,56 @@
+@charset "utf-8";
+/* CSS Document */
+
+.center, .center td, .center th { text-align: center; }
+
+fieldset {
+	border: 0;
+	outline: 0;
+}
+
+/* error classes */
+
+ul.error {
+	margin: 0px 0px 10px 0px;
+	padding: 2px 8px;
+	list-style: none;
+	list-style-image: none;
+	font-weight: bold;
+	color: #D95C5C;
+	background-color: #FBF9F9;
+	border: 1px solid #D95C5C;
+}
+
+div.error,
+span.error,
+label.error {
+	color: #D95C5C;
+	font-weight: bold;
+}
+
+input.error,
+textarea.error,
+select.error {
+	background-color: #FBD8D8;
+	border: 1px solid #D95C5C;
+}
+
+
+/* required field icons */
+
+.required SPAN,
+SPAN.required {
+	color: #FF0000;
+	font-weight: bold;
+}
+
+label.required {
+	display: inline-block;
+	padding-right: 10px;
+	background: url(../images/required.gif) no-repeat right top;
+}
+
+div.required {
+	padding-left: 10px;
+	background: url(../images/required.gif) no-repeat left top;
+}

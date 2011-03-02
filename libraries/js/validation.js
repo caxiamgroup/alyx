@@ -111,7 +111,7 @@ FormValidation.prototype.onValidationComplete = function()
 	if (this.errorMessages.length)
 	{
 		var errorMessageBlock = $('#error-message-' + this.id).get(0);
-		var output = 'The following problems were found:\n';
+		var output = getErrorHeading();
 				 
 		if (errorMessageBlock)
 		{

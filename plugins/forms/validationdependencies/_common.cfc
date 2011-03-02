@@ -12,7 +12,7 @@
 		<cfset local.errorMsg = arguments.override/>
 
 		<cfif not Len(local.errorMsg)>
-			<cfset local.errorMsg = application.controller.getPlugin("snippets").getSnippet(arguments.messageID, "_errormessages")/>
+			<cfset local.errorMsg = application.controller.getPlugin("snippets").getSnippet(arguments.messageID, "errormessages")/>
 		</cfif>
 
 		<cfreturn local.errorMsg/>

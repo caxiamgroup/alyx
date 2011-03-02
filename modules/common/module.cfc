@@ -1,7 +1,8 @@
-﻿<cfcomponent><cfscript>
+﻿component
+{
 
 	function init()
 	{
 	}
 
-</cfscript></cfcomponent>
+}

@@ -192,7 +192,7 @@
 		local.environment = getEnvironment();
 		if (Len(local.environment))
 		{
-			application.controller.loadSettingsFile("/config/settings." & local.environment & ".cfm");
+			application.controller.loadSettingsFile("/config/settings-" & local.environment & ".cfm");
 		}
 
 		application.controller.initPlugin(name = "snippets");

@@ -20,44 +20,31 @@
 	</cffunction>
 
 	<cffunction name="loadSnippets" output="false" access="private" returntype="string" hint="Loads common snippets">
-		<cfset var data = ""/>
-		<cfset var snippets = StructNew()/>
+		<cfset var local = StructNew()/>
 
-		<!--- Get Common/Global Snippets --->
-		<cftry>
-			<cfquery name="data" datasource="#application.controller.getSetting("staticDSN")#">
-				SELECT * FROM snippets
-			</cfquery>
+		<!--- Get snippets from framework --->
 
-			<cfloop query="data">
-				<cfif not StructKeyExists(snippets, data.pageId)>
-					<cfset snippets[data.pageId] = StructNew()/>
+		<cfset local.file = ExpandPath("/alyx/config/snippets.json")/>
+		<cffile action="read" file="#local.file#" variable="local.data"/>
+		<cfset local.snippets = DeSerializeJson(local.data)/>
+
+		<!--- Get snippets from website --->
+
+		<cfset local.file = ExpandPath("/config/snippets.json")/>
+		<cfif FileExists(local.file)>
+			<cffile action="read" file="#local.file#" variable="local.data"/>
+			<cfset local.siteSnippets = DeSerializeJson(local.data)/>
+
+			<cfloop collection="#local.siteSnippets#" item="local.pageId">
+				<cfif StructKeyExists(local.snippets, local.pageId)>
+					<cfset StructAppend(local.snippets[local.pageId], local.siteSnippets[local.pageId])/>
+				<cfelse>
+					<cfset local.snippets[local.pageId] = local.siteSnippets[local.pageId]/>
 				</cfif>
-				<cfset snippets[data.pageId][data.snippetId] = data.snippet/>
 			</cfloop>
-			<cfcatch type="database">
-				<!--- Ignore error if snippets table doesn't exist --->
-			</cfcatch>
-		</cftry>
+		</cfif>
 
-		<!--- Get Website Specific Snippets --->
-		<cftry>
-			<cfquery name="data" datasource="#application.controller.getSetting("DSN")#">
-				SELECT * FROM snippets
-			</cfquery>
-
-			<cfloop query="data">
-				<cfif not StructKeyExists(snippets, data.pageId)>
-					<cfset snippets[data.pageId] = StructNew()/>
-				</cfif>
-				<cfset snippets[data.pageId][data.snippetId] = data.snippet/>
-			</cfloop>
-			<cfcatch type="database">
-				<!--- Ignore error if snippets table doesn't exist --->
-			</cfcatch>
-		</cftry>
-
-		<cfset variables.snippets = snippets/>
+		<cfset variables.snippets = local.snippets/>
 	</cffunction>
 
 </cfcomponent>

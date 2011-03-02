@@ -191,6 +191,7 @@
 				<cfset local.form.getClientSideValidationScript(context = local)/>
 				<cfset local.output.append("return this.onValidationComplete();};")/>
 				<cfset local.output.append("validationForms['" & local.formName & "']=formRef;")/>
+				<cfset local.output.append("function getErrorHeading(){return '" & JSStringFormat(HtmlEditFormat(application.controller.getPlugin("snippets").getSnippet("errorheading", "errormessages"))) & "'};")/>
 			</cfif>
 		</cfloop>
 
@@ -315,13 +316,13 @@
 
 		<cfswitch expression="#ListFirst(arguments.type, ":")#">
 			<cfcase value="state">
-				<cfset local.data = ListToArray(local.snippetsPlugin.getSnippet("usa_states_short", "_common"))/>
+				<cfset local.data = ListToArray(local.snippetsPlugin.getSnippet("usa_states_short", "common"))/>
 			</cfcase>
 			<cfcase value="stateVerbose">
-				<cfset local.data = local.snippetsPlugin.getSnippet("usa_states_long", "_common")/>
+				<cfset local.data = local.snippetsPlugin.getSnippet("usa_states_long", "common")/>
 			</cfcase>
 			<cfcase value="country">
-				<cfset local.data = local.snippetsPlugin.getSnippet("countries_long", "_common")/>
+				<cfset local.data = local.snippetsPlugin.getSnippet("countries_long", "common")/>
 			</cfcase>
 			<cfcase value="count">
 				<cfset local.params = ListRest(arguments.type, ":")/>

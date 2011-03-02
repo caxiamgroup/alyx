@@ -24,8 +24,8 @@
 		passwordMask      = "****************",
 		usernameChars     = "0123456789abcdeghijlmnopqrtvwxyz",
 		passwordChars     = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
-		passwordRegExp    = application.controller.getPlugin("snippets").getSnippet("pci_password", "_regexp"),
-		badWords          = application.controller.getPlugin("snippets").getSnippet("pci_password_bad_words", "_regexp")
+		passwordRegExp    = application.controller.getPlugin("snippets").getSnippet("pci_password", "regexp"),
+		badWords          = application.controller.getPlugin("snippets").getSnippet("pci_password_bad_words", "regexp")
 	)
 	{
 		StructAppend(variables, arguments);

@@ -35,7 +35,7 @@
 		<cfif StructKeyExists(arguments.field, "errorMsg" & arguments.messageID)>
 			<cfset local.errorMsg = arguments.field["errorMsg" & arguments.messageID]/>
 		<cfelse>
-			<cfset local.errorMsg = application.controller.getPlugin("snippets").getSnippet(arguments.messageID, "_errormessages")/>
+			<cfset local.errorMsg = application.controller.getPlugin("snippets").getSnippet(arguments.messageID, "errormessages")/>
 		</cfif>
 		<cfset local.errorMsg = Replace(local.errorMsg, "%%fieldname%%", arguments.field.label)/>
 

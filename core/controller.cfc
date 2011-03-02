@@ -30,32 +30,34 @@
 
 		if (StructKeyExists(arguments, "path"))
 		{
-			local.path = arguments.path;
+			local.path = arguments.path & "." & arguments.name;
 		}
 		else
 		{
 			/*
 				Check the following locations:
-				    "/plugins/{environment}/plugin.cfc"
+				    "/plugins/plugin.{environment}.cfc"
 				    "/plugins/plugin.cfc"
 				    "/alyx/plugins/plugin.cfc"
 			*/
 
-			if (Len(variables.framework.getEnvironment()) and FileExists(ExpandPath("/plugins/" & variables.framework.getEnvironment() & "/" & arguments.name & ".cfc")))
+			local.environment = variables.framework.getEnvironment();
+
+			if (Len(local.environment) and FileExists(ExpandPath("/plugins/" & arguments.name & "-" & local.environment & ".cfc")))
 			{
-				local.path = "/plugins." & variables.framework.getEnvironment();
+				local.path = "/plugins." & arguments.name & "-" & local.environment;
 			}
 			else if (FileExists(ExpandPath("/plugins/" & arguments.name & ".cfc")))
 			{
-				local.path = "/plugins";
+				local.path = "/plugins." & arguments.name;
 			}
 			else
 			{
-				local.path = "/alyx.plugins";
+				local.path = "/alyx.plugins." & arguments.name;
 			}
 		}
 
-		local.plugin = CreateObject("component", local.path & "." & arguments.name);
+		local.plugin = CreateObject("component", local.path);
 
 		if (StructKeyExists(arguments, "cache") and arguments.cache eq true)
 		{

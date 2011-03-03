@@ -1,17 +1,20 @@
 <cfcomponent name="DatasetStructArray" extends="dataset" output="no">
+<cfscript>
 
-	<cffunction name="getCount" output="no">
-		<cfreturn ArrayLen(variables.data)/>
-	</cffunction>
+	function getCount()
+	{
+		return ArrayLen(variables.data);
+	}
 
-	<cffunction name="getId" output="no">
-		<cfargument name="row" default="#variables.currentRow#"/>
-		<cfreturn variables.data[arguments.row][variables.idField]/>
-	</cffunction>
+	function getId(row = variables.currentRow)
+	{
+		return variables.data[arguments.row][variables.idField];
+	}
 
-	<cffunction name="getLabel" output="no">
-		<cfargument name="row" default="#variables.currentRow#"/>
-		<cfreturn variables.data[arguments.row][variables.labelField]/>
-	</cffunction>
+	function getLabel(row = variables.currentRow)
+	{
+		return variables.data[arguments.row][variables.labelField];
+	}
 
+</cfscript>
 </cfcomponent>

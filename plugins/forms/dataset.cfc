@@ -1,36 +1,44 @@
 <cfcomponent name="Dataset" output="no" hint="Abstracts a data set for use in validating and displaying form fields.">
-	<cffunction name="init" output="no">
-		<cfargument name="data"            required="yes"/>
-		<cfargument name="idField"         default="id"/>
-		<cfargument name="labelField"      default="label"/>
-		<cfargument name="groupIdField"    default=""/>
-		<cfargument name="groupLabelField" default=""/>
+<cfscript>
 
-		<cfset variables.data = arguments.data/>
-		<cfset variables.idField = arguments.idField/>
-		<cfset variables.labelField = arguments.labelField/>
-		<cfset variables.groupIdField = arguments.groupIdField/>
-		<cfset variables.groupLabelField = arguments.groupLabelField/>
+	function init(
+		required data,
+		idField         = "id",
+		labelField      = "label",
+		groupIdField    = "",
+		groupLabelField = ""
+	)
+	{
+		variables.data = arguments.data;
+		variables.idField = arguments.idField;
+		variables.labelField = arguments.labelField;
+		variables.groupIdField = arguments.groupIdField;
+		variables.groupLabelField = arguments.groupLabelField;
 
-		<cfset Rewind()/>
+		Rewind();
 
-		<cfreturn this/>
-	</cffunction>
+		return this;
+	}
 
-	<cffunction name="rewind" output="no">
-		<cfset variables.currentRow = 1/>
-	</cffunction>
+	function rewind()
+	{
+		variables.currentRow = 1;
+	}
 
-	<cffunction name="next" output="no">
-		<cfset ++variables.currentRow/>
-	</cffunction>
+	function next()
+	{
+		++variables.currentRow;
+	}
 
-	<cffunction name="getData" output="no">
-		<cfreturn variables.data/>
-	</cffunction>
+	function getData()
+	{
+		return variables.data;
+	}
 
-	<cffunction name="hasGroup" output="no">
-		<cfreturn Len(variables.groupIdField) gt 0/>
-	</cffunction>
+	function hasGroup()
+	{
+		return Len(variables.groupIdField) > 0;
+	}
 
+</cfscript>
 </cfcomponent>

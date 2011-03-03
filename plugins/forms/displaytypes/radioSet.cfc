@@ -1,43 +1,64 @@
 <cfcomponent output="no" extends="_common">
+<cfscript>
 
-	<cffunction name="render" output="no">
-		<cfargument name="field"      required="yes"/>
-		<cfargument name="form"       required="yes"/>
-		<cfargument name="extra"      default=""/>
-		<cfargument name="value"      default="#arguments.form.getFieldValue(arguments.field.name)#"/>
-		<cfargument name="dataType"   default="dataset"/>
-		<cfargument name="separator"  default="<br />"/>
-		<cfargument name="labelExtra" default="class=""normal"""/>
+	function render(
+		required field,
+		required form,
+		extra      = "",
+		value      = arguments.form.getFieldValue(arguments.field.name),
+		dataType   = "dataset",
+		separator  = "<br />",
+		labelExtra = "class=""normal"""
+	)
+	{
+		var local = {};
 
-		<cfset var local = StructNew()/>
-		<cfset local.fieldName = arguments.form.getFieldName(arguments.field.name)/>
-		<cfset local.output = ""/>
+		local.fieldName = arguments.form.getFieldName(arguments.field.name);
+		local.output = "";
 
-		<cfif arguments.extra contains "class=""">
-			<cfset arguments.extra = Replace(arguments.extra, "class=""", "class=""radio ")/>
-		<cfelse>
-			<cfset arguments.extra &= " class=""radio"""/>
-		</cfif>
+		if (arguments.extra contains "class=""")
+		{
+			arguments.extra = Replace(arguments.extra, "class=""", "class=""radio ");
+		}
+		else
+		{
+			arguments.extra &= " class=""radio""";
+		}
 
-		<cfif arguments.dataType eq "dataset" and StructKeyExists(arguments.field, "dataset")>
-			<cfset arguments.field.dataset.rewind()/>
-			<cfloop from="1" to="#arguments.field.dataset.getCount()#" index="local.row">
-				<cfif arguments.separator eq "<li>" or local.row gt 1>
-					<cfset local.output &= arguments.separator/>
-				</cfif>
-				<cfset local.id = arguments.field.dataset.getId(local.row)/>
-				<cfset local.output &= '<input type="radio" name="#local.fieldName#" id="#local.fieldName#-#local.id#" value="#local.id#"#arguments.extra#'/>
-				<cfif local.id eq arguments.value>
-					<cfset local.output &= ' checked="checked"'/>
-				</cfif>
-				<cfset local.output &= ' /> ' & arguments.form.label(name = arguments.field.name, for = arguments.field.name & "-" & local.id, label = arguments.field.dataset.getLabel(local.row), required = false, extra = arguments.labelExtra)/>
-				<cfif arguments.separator eq "<li>">
-					<cfset local.output &= "</li>"/>
-				</cfif>
-			</cfloop>
-		</cfif>
+		if (arguments.dataType == "dataset" && StructKeyExists(arguments.field, "dataset"))
+		{
+			arguments.field.dataset.rewind();
+			local.rowCount = arguments.field.dataset.getCount();
+			for (local.row = 1; local.row <= local.rowCount; ++local.row)
+			{
+				if (arguments.separator == "<li>" || local.row > 1)
+				{
+					local.output &= arguments.separator;
+				}
+				local.id = arguments.field.dataset.getId(local.row);
+				local.output &= '<input type="radio" name="#local.fieldName#" id="#local.fieldName#-#local.id#" value="#local.id#"#arguments.extra#';
+				if (local.id == arguments.value)
+				{
+					local.output &= ' checked="checked"';
+				}
+				// CFScript is treating the "for" key as a reserved word (for loops) when used as an argument to a function.
+				local.labelArguments = {
+					name = arguments.field.name,
+					label = arguments.field.dataset.getLabel(local.row),
+					required = false,
+					extra = arguments.labelExtra
+				};
+				local.labelArguments.for = arguments.field.name & "-" & local.id;
+				local.output &= ' /> ' & arguments.form.label(argumentCollection = local.labelArguments);
+				if (arguments.separator == "<li>")
+				{
+					local.output &= "</li>";
+				}
+			}
+		}
 
-		<cfreturn local.output/>
-	</cffunction>
+		return local.output;
+	}
 
+</cfscript>
 </cfcomponent>

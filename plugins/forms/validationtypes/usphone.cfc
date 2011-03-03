@@ -1,32 +1,33 @@
 <cfcomponent output="no" extends="string">
-	<cfset variables.regexp = "^(?:\([2-9]\d{2}\)\ ?|[2-9]\d{2}(?:\-?|\.\ ?))[2-9]\d{2}[-. ]?\d{4}$"/>
+<cfscript>
 
-	<cffunction name="checkAllowedCharacters" access="private" output="no">
-		<cfargument name="field" required="yes"/>
-		<cfargument name="value" required="yes"/>
+	variables.regexp = "^(?:\([2-9]\d{2}\)\ ?|[2-9]\d{2}(?:\-?|\.\ ?))[2-9]\d{2}[-. ]?\d{4}$";
 
-		<cfset var local = StructNew()/>
+	private function checkAllowedCharacters(required field, required value)
+	{
+		var local = {};
 
-		<cfif Len(arguments.value) and REFind(variables.regexp, arguments.value) eq 0>
-			<cfset local.errorMsg = getErrorMessage("usphonebadformat", arguments.field)/>
-			<cfset ArrayAppend(arguments.field.errors, local.errorMsg)/>
-		</cfif>
-	</cffunction>
+		if (Len(arguments.value) && REFind(variables.regexp, arguments.value) == 0)
+		{
+			local.errorMsg = getErrorMessage("usphonebadformat", arguments.field);
+			ArrayAppend(arguments.field.errors, local.errorMsg);
+		}
+	}
 
-	<!--- -------------------- Client Side Validation -------------------- --->
+	/* -------------------- Client Side Validation -------------------- */
 
-	<cffunction name="clientCheckAllowedCharacters" access="private" output="no">
-		<cfargument name="field"   required="yes"/>
-		<cfargument name="context" required="yes"/>
+	private function clientCheckAllowedCharacters(required field, required context)
+	{
+		var local = {};
 
-		<cfset var local = StructNew()/>
+		if (! StructKeyExists(arguments.context.validationHelpers, "validateUsPhone"))
+		{
+			arguments.context.validationHelpers.validateUsPhone = "function validateUsPhone(form,field,errorMsg){var value=form.getValue(field);if(!value.length)return;if(value.search(/#variables.regexp#/)!=0)form.addErrorMessage(errorMsg,field);}";
+		}
 
-		<cfif not StructKeyExists(arguments.context.validationHelpers, "validateUsPhone")>
-			<cfset arguments.context.validationHelpers.validateUsPhone = "function validateUsPhone(form,field,errorMsg){var value=form.getValue(field);if(!value.length)return;if(value.search(/#variables.regexp#/)!=0)form.addErrorMessage(errorMsg,field);}"/>
-		</cfif>
+		local.errorMsg = getErrorMessage("usphonebadformat", arguments.field);
+		arguments.context.output.append("validateUsPhone(this,'" & arguments.field.name & "','" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');");
+	}
 
-		<cfset local.errorMsg = getErrorMessage("usphonebadformat", arguments.field)/>
-		<cfset arguments.context.output.append("validateUsPhone(this,'" & arguments.field.name & "','" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');")/>
-	</cffunction>
-
+</cfscript>
 </cfcomponent>

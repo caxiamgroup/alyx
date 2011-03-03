@@ -1,35 +1,43 @@
 <cfcomponent output="no" extends="_common">
-	<cfset variables.type = "text"/>
+<cfscript>
 
-	<cffunction name="render" output="no">
-		<cfargument name="field"    required="yes"/>
-		<cfargument name="form"     required="yes"/>
-		<cfargument name="extra"    default=""/>
-		<cfargument name="value"    default="#arguments.form.getFieldValue(arguments.field.name)#"/>
+	variables.type = "text";
 
-		<cfset var local = StructNew()/>
-		<cfset local.fieldName = arguments.form.getFieldName(arguments.field.name)/>
+	function render(
+		required field,
+		required form,
+		extra     = "",
+		value     = arguments.form.getFieldValue(arguments.field.name)
+	)
+	{
+		var local = {};
 
-		<cfif StructKeyExists(arguments, "size")>
-			<cfset arguments.extra &= " size=""" & arguments.size & """"/>
-		</cfif>
+		local.fieldName = arguments.form.getFieldName(arguments.field.name);
 
-		<cfif StructKeyExists(arguments.field, "maxLength")>
-			<cfset arguments.extra &= " maxlength=""" & arguments.field.maxLength & """"/>
-		</cfif>
+		if (StructKeyExists(arguments, "size"))
+		{
+			arguments.extra &= " size=""" & arguments.size & """";
+		}
 
-		<cfif Len(Trim(arguments.extra))>
-			<cfset arguments.extra = " " & Trim(arguments.extra)/>
-		</cfif>
+		if (StructKeyExists(arguments.field, "maxLength"))
+		{
+			arguments.extra &= " maxlength=""" & arguments.field.maxLength & """";
+		}
 
-		<cfset arguments.value = formatValue(arguments.value)/>
+		if (Len(Trim(arguments.extra)))
+		{
+			arguments.extra = " " & Trim(arguments.extra);
+		}
 
-		<cfreturn '<input type="#variables.type#" name="#local.fieldName#" id="#local.fieldName#" value="#HtmlEditFormat(arguments.value)#"#arguments.extra# />'/>
-	</cffunction>
+		arguments.value = formatValue(arguments.value);
 
-	<cffunction name="formatValue" access="private" output="false">
-		<cfargument name="value" required="yes"/>
-		<cfreturn arguments.value/>
-	</cffunction>
+		return '<input type="#variables.type#" name="#local.fieldName#" id="#local.fieldName#" value="#HtmlEditFormat(arguments.value)#"#arguments.extra# />';
+	}
 
+	private function formatValue(required value)
+	{
+		return arguments.value;
+	}
+
+</cfscript>
 </cfcomponent>

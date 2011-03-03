@@ -1,31 +1,31 @@
 <cfcomponent output="no" extends="numeric">
+<cfscript>
 
-	<cffunction name="checkAllowedCharacters" access="private" output="no">
-		<cfargument name="field" required="yes"/>
-		<cfargument name="value" required="yes"/>
+	private function checkAllowedCharacters(required field, required value)
+	{
+		var local = {};
 
-		<cfset var local = StructNew()/>
+		if (Len(arguments.value) && ReFind("[^0-9,]", arguments.value) != 0)
+		{
+			local.errorMsg = getErrorMessage("integeronly", arguments.field);
+			ArrayAppend(arguments.field.errors, local.errorMsg);
+		}
+	}
 
-		<cfif Len(arguments.value) and ReFind("[^0-9,]", arguments.value) neq 0>
-			<cfset local.errorMsg = getErrorMessage("integeronly", arguments.field)/>
-			<cfset ArrayAppend(arguments.field.errors, local.errorMsg)/>
-		</cfif>
-	</cffunction>
+	/* -------------------- Client Side Validation -------------------- */
 
-	<!--- -------------------- Client Side Validation -------------------- --->
+	private function clientCheckAllowedCharacters(required field, required context)
+	{
+		var local = {};
 
-	<cffunction name="clientCheckAllowedCharacters" access="private" output="no">
-		<cfargument name="field"   required="yes"/>
-		<cfargument name="context" required="yes"/>
+		if (! StructKeyExists(arguments.context.validationHelpers, "validateInteger"))
+		{
+			arguments.context.validationHelpers.validateInteger = "function validateInteger(form,field,errorMsg){if(form.getValue(field).search(/[^0-9,]/)>=0)form.addErrorMessage(errorMsg,field);}";
+		}
 
-		<cfset var local = StructNew()/>
+		local.errorMsg = getErrorMessage("integeronly", arguments.field);
+		arguments.context.output.append("validateInteger(this,'" & arguments.field.name & "','" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');");
+	}
 
-		<cfif not StructKeyExists(arguments.context.validationHelpers, "validateInteger")>
-			<cfset arguments.context.validationHelpers.validateInteger = "function validateInteger(form,field,errorMsg){if(form.getValue(field).search(/[^0-9,]/)>=0)form.addErrorMessage(errorMsg,field);}"/>
-		</cfif>
-
-		<cfset local.errorMsg = getErrorMessage("integeronly", arguments.field)/>
-		<cfset arguments.context.output.append("validateInteger(this,'" & arguments.field.name & "','" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');")/>
-	</cffunction>
-
+</cfscript>
 </cfcomponent>

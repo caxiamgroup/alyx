@@ -1,27 +1,30 @@
 <cfcomponent name="DatasetQuery" extends="dataset" output="no">
+<cfscript>
 
-	<cffunction name="getCount" output="no">
-		<cfreturn variables.data.recordcount/>
-	</cffunction>
+	function getCount()
+	{
+		return variables.data.recordcount;
+	}
 
-	<cffunction name="getId" output="no">
-		<cfargument name="row" default="#variables.currentRow#"/>
-		<cfreturn variables.data[variables.idField][arguments.row]/>
-	</cffunction>
+	function getId(row = variables.currentRow)
+	{
+		return variables.data[variables.idField][arguments.row];
+	}
 
-	<cffunction name="getLabel" output="no">
-		<cfargument name="row" default="#variables.currentRow#"/>
-		<cfreturn variables.data[variables.labelField][arguments.row]/>
-	</cffunction>
+	function getLabel(row = variables.currentRow)
+	{
+		return variables.data[variables.labelField][arguments.row];
+	}
 
-	<cffunction name="getGroupId" output="no">
-		<cfargument name="row" default="#variables.currentRow#"/>
-		<cfreturn variables.data[variables.groupIdField][arguments.row]/>
-	</cffunction>
+	function getGroupId(row = variables.currentRow)
+	{
+		return variables.data[variables.groupIdField][arguments.row];
+	}
 
-	<cffunction name="getGroupLabel" output="no">
-		<cfargument name="row" default="#variables.currentRow#"/>
-		<cfreturn variables.data[variables.groupLabelField][arguments.row]/>
-	</cffunction>
+	function getGroupLabel(row = variables.currentRow)
+	{
+		return variables.data[variables.groupLabelField][arguments.row];
+	}
 
+</cfscript>
 </cfcomponent>

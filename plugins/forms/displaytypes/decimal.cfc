@@ -1,12 +1,15 @@
 <cfcomponent output="no" extends="text">
+<cfscript>
 
-	<cffunction name="formatValue" access="private" output="false">
-		<cfargument name="value" required="yes"/>
-		<cfset arguments.value = ReReplace(arguments.value, "[^0-9.-]", "", "all")/>
-		<cfif IsNumeric(arguments.value)>
-			<cfset arguments.value = NumberFormat(arguments.value, ",0.00")/>
-		</cfif>
-		<cfreturn arguments.value/>
-	</cffunction>
+	private function formatValue(required value)
+	{
+		arguments.value = ReReplace(arguments.value, "[^0-9.-]", "", "all");
+		if (IsNumeric(arguments.value))
+		{
+			arguments.value = NumberFormat(arguments.value, ",0.00");
+		}
+		return arguments.value;
+	}
 
+</cfscript>
 </cfcomponent>

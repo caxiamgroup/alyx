@@ -1,72 +1,66 @@
 <cfcomponent output="no">
+<cfscript>
 
-	<cffunction name="init" output="no">
-		<cfreturn this/>
-	</cffunction>
+	function init()
+	{
+		return this;
+	}
 
-	<cffunction name="validate" output="no">
-		<cfargument name="field" required="yes"/>
-		<cfargument name="value" required="yes"/>
+	function validate(required field, required value)
+	{
+		validateRequired(argumentCollection = arguments);
+		doCustomValidations(argumentCollection = arguments);
+	}
 
-		<cfset validateRequired(argumentCollection = arguments)/>
-		<cfset doCustomValidations(argumentCollection = arguments)/>
-	</cffunction>
+	function validateRequired(required field, required value)
+	{
+		var local = {};
 
-	<cffunction name="validateRequired" access="private" output="no">
-		<cfargument name="field" required="yes"/>
-		<cfargument name="value" required="yes"/>
+		if (StructKeyExists(arguments.field, "required") && arguments.field.required == true)
+		{
+			if (! Len(arguments.value))
+			{
+				local.errorMsg = getErrorMessage("required", arguments.field);
+				ArrayAppend(arguments.field.errors, local.errorMsg);
+			}
+		}
+	}
 
-		<cfset var local = StructNew()/>
+	function getErrorMessage(required messageId, required field)
+	{
+		var local = {};
 
-		<cfif StructKeyExists(arguments.field, "required") and arguments.field.required is true>
-			<cfif not Len(arguments.value)>
-				<cfset local.errorMsg = getErrorMessage("required", arguments.field)/>
-				<cfset ArrayAppend(arguments.field.errors, local.errorMsg)/>
-			</cfif>
-		</cfif>
-	</cffunction>
+		if (StructKeyExists(arguments.field, "errorMsg" & arguments.messageId))
+		{
+			local.errorMsg = arguments.field["errorMsg" & arguments.messageId];
+		}
+		else
+		{
+			local.errorMsg = application.controller.getPlugin("snippets").getSnippet(arguments.messageId, "errormessages");
+		}
+		local.errorMsg = Replace(local.errorMsg, "%%fieldname%%", arguments.field.label);
 
-	<cffunction name="getErrorMessage" output="no">
-		<cfargument name="messageID" required="yes"/>
-		<cfargument name="field"     required="yes"/>
+		return local.errorMsg;
+	}
 
-		<cfset var local = StructNew()/>
+	/* -------------------- Client Side Validation -------------------- */
 
-		<cfif StructKeyExists(arguments.field, "errorMsg" & arguments.messageID)>
-			<cfset local.errorMsg = arguments.field["errorMsg" & arguments.messageID]/>
-		<cfelse>
-			<cfset local.errorMsg = application.controller.getPlugin("snippets").getSnippet(arguments.messageID, "errormessages")/>
-		</cfif>
-		<cfset local.errorMsg = Replace(local.errorMsg, "%%fieldname%%", arguments.field.label)/>
+	function getClientSideValidationScript(required field, required context)
+	{
+		clientValidateRequired(argumentCollection = arguments);
+		clientDoCustomValidations(argumentCollection = arguments);
+	}
 
-		<cfreturn local.errorMsg/>
-	</cffunction>
+	function clientValidateRequired(required field, required context)
+	{
+		var local = {};
 
-	<!--- -------------------- Client Side Validation -------------------- --->
+		if (StructKeyExists(arguments.field, "required") && arguments.field.required == true)
+		{
+			local.errorMsg = getErrorMessage("required", arguments.field);
+			arguments.context.output.append("validateRequired(this,'" & arguments.field.name & "','" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');");
+		}
+	}
 
-	<cffunction name="getClientSideValidationScript" output="no">
-		<cfargument name="field"   required="yes"/>
-		<cfargument name="context" required="yes"/>
-
-		<cfset clientValidateRequired(argumentCollection = arguments)/>
-		<cfset clientDoCustomValidations(argumentCollection = arguments)/>
-	</cffunction>
-
-	<cffunction name="clientValidateRequired" output="no">
-		<cfargument name="field"   required="yes"/>
-		<cfargument name="context" required="yes"/>
-
-		<cfset var local = StructNew()/>
-
-		<cfif StructKeyExists(arguments.field, "required") and arguments.field.required is true>
-			<!--- Moved to common validation.js file
-			<cfif not StructKeyExists(arguments.context.validationHelpers, "required")>
-				<cfset arguments.context.validationHelpers.required = "function validateRequired(form,field,errorMsg){if(!form.isNotRequired(field)&&form.getValue(field)=='')form.addErrorMessage(errorMsg,field);}"/>
-			</cfif>
-			--->
-
-			<cfset local.errorMsg = getErrorMessage("required", arguments.field)/>
-			<cfset arguments.context.output.append("validateRequired(this,'" & arguments.field.name & "','" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');")/>
-		</cfif>
-	</cffunction>
+</cfscript>
 </cfcomponent>

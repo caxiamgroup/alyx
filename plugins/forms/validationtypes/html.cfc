@@ -1,19 +1,17 @@
 <cfcomponent output="no" extends="string">
+<cfscript>
 
-	<cffunction name="checkAllowedCharacters" access="private" output="no">
-		<cfargument name="field" required="yes"/>
-		<cfargument name="value" required="yes"/>
+	private function checkAllowedCharacters(required field, required value)
+	{
+		// This type allows any character
+	}
 
-		<!--- This type allows any character --->
-	</cffunction>
+	/* -------------------- Client Side Validation -------------------- */
 
-	<!--- -------------------- Client Side Validation -------------------- --->
+	private function clientCheckAllowedCharacters(required field, required context)
+	{
+		// This type allows any character
+	}
 
-	<cffunction name="clientCheckAllowedCharacters" access="private" output="no">
-		<cfargument name="field"   required="yes"/>
-		<cfargument name="context" required="yes"/>
-
-		<!--- This type allows any character --->
-	</cffunction>
-
+</cfscript>
 </cfcomponent>

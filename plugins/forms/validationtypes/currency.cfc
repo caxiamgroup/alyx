@@ -1,3 +1,7 @@
 <cfcomponent output="no" extends="decimal">
-	<cfset variables.type = "Currency"/>
+<cfscript>
+
+	variables.type = "Currency";
+
+</cfscript>
 </cfcomponent>

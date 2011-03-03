@@ -1,15 +1,15 @@
 <cfcomponent output="no" extends="string">
+<cfscript>
 
-	<cffunction name="checkAllowedCharacters" access="private" output="no">
-		<cfargument name="field" required="yes"/>
-		<cfargument name="value" required="yes"/>
-	</cffunction>
+	private function checkAllowedCharacters(required field, required value)
+	{
+	}
 
-	<!--- -------------------- Client Side Validation -------------------- --->
+	/* -------------------- Client Side Validation -------------------- */
 
-	<cffunction name="clientCheckAllowedCharacters" access="private" output="no">
-		<cfargument name="field"   required="yes"/>
-		<cfargument name="context" required="yes"/>
-	</cffunction>
+	private function clientCheckAllowedCharacters(required field, required context)
+	{
+	}
 
+</cfscript>
 </cfcomponent>

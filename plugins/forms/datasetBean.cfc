@@ -1,21 +1,22 @@
 <cfcomponent name="DatasetBean" extends="dataset" output="no">
+<cfscript>
 
-	<cffunction name="getCount" output="no">
-		<cfreturn ArrayLen(variables.data)/>
-	</cffunction>
+	function getCount()
+	{
+		return ArrayLen(variables.data);
+	}
 
-	<cffunction name="getId" output="no">
-		<cfargument name="row" default="#variables.currentRow#"/>
-		<cfset var value = ""/>
-		<cfinvoke component="#variables.data[arguments.row]#" method="get#variables.idField#" returnVariable="value"/>
-		<cfreturn value/>
-	</cffunction>
+	function getId(row = variables.currentRow)
+	{
+		var value = evaluate("variables.data[arguments.row].get#variables.idField#()");
+		return value;
+	}
 
-	<cffunction name="getLabel" output="no">
-		<cfargument name="row" default="#variables.currentRow#"/>
-		<cfset var value = ""/>
-		<cfinvoke component="#variables.data[arguments.row]#" method="get#variables.labelField#" returnVariable="value"/>
-		<cfreturn value/>
-	</cffunction>
+	function getLabel(row = variables.currentRow)
+	{
+		var value = evaluate("variables.data[arguments.row].get#variables.labelField#()");
+		return value;
+	}
 
+</cfscript>
 </cfcomponent>

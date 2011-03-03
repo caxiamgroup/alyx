@@ -1,79 +1,93 @@
 <cfcomponent output="no" extends="_common">
+<cfscript>
 
-	<cffunction name="validate" output="no">
-		<cfargument name="form"       required="yes"/>
-		<cfargument name="params"     required="yes"/>
+	function validate(required form, required params)
+	{
+		var local = {};
 
-		<cfset var local = StructNew()/>
-		<cfset local.fields = ListToArray(arguments.params.fields)/>
-		<cfset local.refFieldValue = arguments.form.getFieldValue(local.fields[1])/>
-		<cfset local.fieldLabels = arguments.form.getField(local.fields[1]).label/>
-		<cfset local.matches = false/>
-		<cfset local.numFields = ArrayLen(local.fields)/>
+		local.fields = ListToArray(arguments.params.fields);
+		local.refFieldValue = arguments.form.getFieldValue(local.fields[1]);
+		local.fieldLabels = arguments.form.getField(local.fields[1]).label;
+		local.matches = false;
+		local.numFields = ArrayLen(local.fields);
 
-		<cfloop from="1" to="#local.numFields#" index="local.fieldIndex">
-			<cfset local.field = arguments.form.getField(local.fields[local.fieldIndex])/>
+		for (local.fieldIndex = 1; local.fieldIndex <= local.numFields; ++local.fieldIndex)
+		{
+			local.field = arguments.form.getField(local.fields[local.fieldIndex]);
 
-			<cfif ArrayLen(local.field.errors)>
-				<!--- Skip dependency checking if any fields already have an error --->
-				<cfset local.matches = false/>
-				<cfbreak/>
-			</cfif>
+			if (ArrayLen(local.field.errors))
+			{
+				// Skip dependency checking if any fields already have an error
+				local.matches = false;
+				break;
+			}
 
-			<cfset local.fieldValue = arguments.form.getFieldValue(local.field.name)/>
+			local.fieldValue = arguments.form.getFieldValue(local.field.name);
 
-			<cfif local.fieldIndex eq 1>
-				<cfset local.fieldLabels = local.field.label/>
-				<cfset local.refFieldValue = local.fieldValue/>
-			<cfelse>
-				<cfif local.fieldIndex lt local.numFields>
-					<cfset local.fieldLabels &= ", " & local.field.label/>
-				<cfelse>
-					<cfset local.fieldLabels &= " and " & local.field.label/>
-				</cfif>
+			if (local.fieldIndex == 1)
+			{
+				local.fieldLabels = local.field.label;
+				local.refFieldValue = local.fieldValue;
+			}
+			else
+			{
+				if (local.fieldIndex < local.numFields)
+				{
+					local.fieldLabels &= ", " & local.field.label;
+				}
+				else
+				{
+					local.fieldLabels &= " and " & local.field.label;
+				}
 
-				<cfif getIgnoreCase()>
-					<cfset local.matchResults = CompareNoCase(local.fieldValue, local.refFieldValue)/>
-				<cfelse>
-					<cfset local.matchResults = Compare(local.fieldValue, local.refFieldValue)/>
-				</cfif>
+				if (getIgnoreCase())
+				{
+					local.matchResults = CompareNoCase(local.fieldValue, local.refFieldValue);
+				}
+				else
+				{
+					local.matchResults = Compare(local.fieldValue, local.refFieldValue);
+				}
 
-				<cfif local.matchResults eq 0>
-					<cfset local.matches = true/>
-					<cfbreak/>
-				</cfif>
-			</cfif>
-		</cfloop>
+				if (local.matchResults == 0)
+				{
+					local.matches = true;
+					break;
+				}
+			}
+		}
 
-		<cfif local.matches>
-			<cfset local.errorMsg = getErrorMessage("mustnotmatch", arguments.params.errorMsg)/>
-			<cfset local.errorMsg = Replace(local.errorMsg, "%%fieldname%%", local.fieldLabels)/>
-			<cfset arguments.form.addError(local.errorMsg, local.fields)/>
-		</cfif>
-	</cffunction>
+		if (local.matches)
+		{
+			local.errorMsg = getErrorMessage("mustnotmatch", arguments.params.errorMsg);
+			local.errorMsg = Replace(local.errorMsg, "%%fieldname%%", local.fieldLabels);
+			arguments.form.addError(local.errorMsg, local.fields);
+		}
+	}
 
-	<cffunction name="getIgnoreCase" access="private" output="no">
-		<cfreturn false/>
-	</cffunction>
+	private function getIgnoreCase()
+	{
+		return false;
+	}
 
-	<!--- -------------------- Client Side Validation -------------------- --->
+	/* -------------------- Client Side Validation -------------------- */
 
-	<cffunction name="getClientSideValidationScript" output="no">
-		<cfargument name="form"    required="yes"/>
-		<cfargument name="params"  required="yes"/>
-		<cfargument name="context" required="yes"/>
+	function getClientSideValidationScript(required form, required params, required context)
+	{
+		var local = {};
 
-		<cfset var local = StructNew()/>
-		<cfset local.fields = ListToArray(arguments.params.fields)/>
-		<cfset local.fieldLabels = getFieldLabels(arguments.form, local.fields)/>
+		local.fields = ListToArray(arguments.params.fields);
+		local.fieldLabels = getFieldLabels(arguments.form, local.fields);
 
-		<cfif not StructKeyExists(arguments.context.validationHelpers, "noMatch")>
-			<cfset arguments.context.validationHelpers.noMatch = "function validateNoMatch(form,fields,errorMsg){fields=fields.split(',');var ref=form.getValue(fields[0]);if(!ref.length)return;for(var i=1;i<fields.length;++i){if(form.getValue(fields[i])==ref){form.addErrorMessages(errorMsg,fields);break;}}}"/>
-		</cfif>
+		if (! StructKeyExists(arguments.context.validationHelpers, "noMatch"))
+		{
+			arguments.context.validationHelpers.noMatch = "function validateNoMatch(form,fields,errorMsg){fields=fields.split(',');var ref=form.getValue(fields[0]);if(!ref.length)return;for(var i=1;i<fields.length;++i){if(form.getValue(fields[i])==ref){form.addErrorMessages(errorMsg,fields);break;}}}";
+		}
 
-		<cfset local.errorMsg = getErrorMessage("mustnotmatch", arguments.params.errorMsg)/>
-		<cfset local.errorMsg = Replace(local.errorMsg, "%%fieldname%%", local.fieldLabels)/>
-		<cfset arguments.context.output.append("validateNoMatch(this,'" & arguments.params.fields & "','" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');")/>
-	</cffunction>
+		local.errorMsg = getErrorMessage("mustnotmatch", arguments.params.errorMsg);
+		local.errorMsg = Replace(local.errorMsg, "%%fieldname%%", local.fieldLabels);
+		arguments.context.output.append("validateNoMatch(this,'" & arguments.params.fields & "','" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');");
+	}
 
+</cfscript>
 </cfcomponent>

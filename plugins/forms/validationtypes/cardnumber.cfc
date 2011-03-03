@@ -1,31 +1,31 @@
 <cfcomponent output="no" extends="string">
+<cfscript>
 
-	<cffunction name="checkAllowedCharacters" access="private" output="no">
-		<cfargument name="field" required="yes"/>
-		<cfargument name="value" required="yes"/>
+	private function checkAllowedCharacters(required field, required value)
+	{
+		var local = {};
 
-		<cfset var local = StructNew()/>
+		if (Len(arguments.value) && ! IsValid("creditcard", arguments.value))
+		{
+			local.errorMsg = getErrorMessage("cardnumberbadformat", arguments.field);
+			ArrayAppend(arguments.field.errors, local.errorMsg);
+		}
+	}
 
-		<cfif Len(arguments.value) and not IsValid("creditcard", arguments.value)>
-			<cfset local.errorMsg = getErrorMessage("cardnumberbadformat", arguments.field)/>
-			<cfset ArrayAppend(arguments.field.errors, local.errorMsg)/>
-		</cfif>
-	</cffunction>
+	/* -------------------- Client Side Validation -------------------- */
 
-	<!--- -------------------- Client Side Validation -------------------- --->
+	private function clientCheckAllowedCharacters(required field, required context)
+	{
+		var local = {};
 
-	<cffunction name="clientCheckAllowedCharacters" access="private" output="no">
-		<cfargument name="field"   required="yes"/>
-		<cfargument name="context" required="yes"/>
+		if (! StructKeyExists(arguments.context.validationHelpers, "validateCardNumber"))
+		{
+			arguments.context.validationHelpers.validateCardNumber = "function validateCardNumber(form,field,errorMsg){var value=form.getValue(field);if(!value.length)return;if(value.search(/[^0-9,]/)>=0)form.addErrorMessage(errorMsg,field);var len=value.length;var parity=len%2;var total=0;for(var i=0;i<len;++i){var digit=value.charAt(i);if(i%2==parity){digit*=2;if(digit>9){digit-=9;}}total+=parseInt(digit);}if(total%10!=0)form.addErrorMessage(errorMsg,field);}";
+		}
 
-		<cfset var local = StructNew()/>
+		local.errorMsg = getErrorMessage("cardnumberbadformat", arguments.field);
+		arguments.context.output.append("validateCardNumber(this,'" & arguments.field.name & "','" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');");
+	}
 
-		<cfif not StructKeyExists(arguments.context.validationHelpers, "validateCardNumber")>
-			<cfset arguments.context.validationHelpers.validateCardNumber = "function validateCardNumber(form,field,errorMsg){var value=form.getValue(field);if(!value.length)return;if(value.search(/[^0-9,]/)>=0)form.addErrorMessage(errorMsg,field);var len=value.length;var parity=len%2;var total=0;for(var i=0;i<len;++i){var digit=value.charAt(i);if(i%2==parity){digit*=2;if(digit>9){digit-=9;}}total+=parseInt(digit);}if(total%10!=0)form.addErrorMessage(errorMsg,field);}"/>
-		</cfif>
-
-		<cfset local.errorMsg = getErrorMessage("cardnumberbadformat", arguments.field)/>
-		<cfset arguments.context.output.append("validateCardNumber(this,'" & arguments.field.name & "','" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');")/>
-	</cffunction>
-
+</cfscript>
 </cfcomponent>

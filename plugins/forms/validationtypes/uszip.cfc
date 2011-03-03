@@ -1,31 +1,31 @@
 <cfcomponent output="no" extends="string">
+<cfscript>
 
-	<cffunction name="checkAllowedCharacters" access="private" output="no">
-		<cfargument name="field" required="yes"/>
-		<cfargument name="value" required="yes"/>
+	private function checkAllowedCharacters(required field, required value)
+	{
+		var local = {};
 
-		<cfset var local = StructNew()/>
+		if (Len(arguments.value) && ! IsValid("zipcode", arguments.value))
+		{
+			local.errorMsg = getErrorMessage("uszipbadformat", arguments.field);
+			ArrayAppend(arguments.field.errors, local.errorMsg);
+		}
+	}
 
-		<cfif Len(arguments.value) and not IsValid("zipcode", arguments.value)>
-			<cfset local.errorMsg = getErrorMessage("uszipbadformat", arguments.field)/>
-			<cfset ArrayAppend(arguments.field.errors, local.errorMsg)/>
-		</cfif>
-	</cffunction>
+	/* -------------------- Client Side Validation -------------------- */
 
-	<!--- -------------------- Client Side Validation -------------------- --->
+	private function clientCheckAllowedCharacters(required field, required context)
+	{
+		var local = {};
 
-	<cffunction name="clientCheckAllowedCharacters" access="private" output="no">
-		<cfargument name="field"   required="yes"/>
-		<cfargument name="context" required="yes"/>
+		if (! StructKeyExists(arguments.context.validationHelpers, "validateUsZip"))
+		{
+			arguments.context.validationHelpers.validateUsZip = "function validateUsZip(form,field,errorMsg){var value=form.getValue(field);if(!value.length)return;if((value.search(/^[0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]$/)!=0&&value.search(/^[0-9][0-9][0-9][0-9][0-9]$/)!=0))form.addErrorMessage(errorMsg,field);}";
+		}
 
-		<cfset var local = StructNew()/>
+		local.errorMsg = getErrorMessage("uszipbadformat", arguments.field);
+		arguments.context.output.append("validateUsZip(this,'" & arguments.field.name & "','" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');");
+	}
 
-		<cfif not StructKeyExists(arguments.context.validationHelpers, "validateUsZip")>
-			<cfset arguments.context.validationHelpers.validateUsZip = "function validateUsZip(form,field,errorMsg){var value=form.getValue(field);if(!value.length)return;if((value.search(/^[0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]$/)!=0&&value.search(/^[0-9][0-9][0-9][0-9][0-9]$/)!=0))form.addErrorMessage(errorMsg,field);}"/>
-		</cfif>
-
-		<cfset local.errorMsg = getErrorMessage("uszipbadformat", arguments.field)/>
-		<cfset arguments.context.output.append("validateUsZip(this,'" & arguments.field.name & "','" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');")/>
-	</cffunction>
-
+</cfscript>
 </cfcomponent>

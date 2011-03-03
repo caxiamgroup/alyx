@@ -1,5 +1,10 @@
 <cfcomponent output="no">
-	<cffunction name="init" output="no">
-		<cfreturn this/>
-	</cffunction>
+<cfscript>
+
+	function init()
+	{
+		return this;
+	}
+
+</cfscript>
 </cfcomponent>

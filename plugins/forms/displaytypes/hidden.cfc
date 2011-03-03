@@ -1,19 +1,24 @@
 <cfcomponent output="no" extends="_common">
+<cfscript>
 
-	<cffunction name="render" output="no">
-		<cfargument name="field"    required="yes"/>
-		<cfargument name="form"     required="yes"/>
-		<cfargument name="extra"    default=""/>
-		<cfargument name="value"    default="#arguments.form.getFieldValue(arguments.field.name)#"/>
+	function render(
+		required field,
+		required form,
+		extra     = "",
+		value     = arguments.form.getFieldValue(arguments.field.name)
+	)
+	{
+		var local = {};
 
-		<cfset var local = StructNew()/>
-		<cfset local.fieldName = arguments.form.getFieldName(arguments.field.name)/>
+		local.fieldName = arguments.form.getFieldName(arguments.field.name);
 
-		<cfif Len(Trim(arguments.extra))>
-			<cfset arguments.extra = " " & Trim(arguments.extra)/>
-		</cfif>
+		if (Len(Trim(arguments.extra)))
+		{
+			arguments.extra = " " & Trim(arguments.extra);
+		}
 
-		<cfreturn '<input type="hidden" name="#local.fieldName#" id="#local.fieldName#" value="#HtmlEditFormat(arguments.value)#"#arguments.extra# />'/>
-	</cffunction>
+		return '<input type="hidden" name="#local.fieldName#" id="#local.fieldName#" value="#HtmlEditFormat(arguments.value)#"#arguments.extra# />';
+	}
 
+</cfscript>
 </cfcomponent>

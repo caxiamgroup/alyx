@@ -1,112 +1,114 @@
 <cfcomponent output="no" extends="string">
+<cfscript>
 
-	<cfset variables.type = "Decimal"/>
+	variables.type = "Decimal";
 
-	<cffunction name="doCustomValidations" access="private" output="no">
-		<cfargument name="field" required="yes"/>
-		<cfargument name="value" required="yes"/>
-
-		<!--- Can't call super.doCustomValidations because we would lose context
+	private function doCustomValidations(required field, required value)
+	{
+		/* Can't call super.doCustomValidations because we would lose context
 		      and the call to checkAllowedCharacters would get scoped to the
-		      wrong component for any components that extend this one. --->
+		      wrong component for any components that extend this one. */
 
-		<cfset checkRange(argumentCollection = arguments)/>
-		<cfset checkLength(argumentCollection = arguments)/>
-		<cfset checkAllowedCharacters(argumentCollection = arguments)/>
-	</cffunction>
+		checkRange(argumentCollection = arguments);
+		checkLength(argumentCollection = arguments);
+		checkAllowedCharacters(argumentCollection = arguments);
+	}
 
-	<cffunction name="checkRange" access="private" output="no">
-		<cfargument name="field" required="yes"/>
-		<cfargument name="value" required="yes"/>
+	private function checkRange(required field, required value)
+	{
+		var local = {};
 
-		<cfset var local = StructNew()/>
+		if (! ArrayLen(arguments.field.errors) && Len(arguments.value))
+		{
+			local.value = ReReplace(arguments.value, "[^0-9.-]", "", "all");
+			if (IsNumeric(local.value))
+			{
+				if (StructKeyExists(arguments.field, "maxValue"))
+				{
+					if (local.value > arguments.field.maxValue)
+					{
+						local.errorMsg = getErrorMessage("maxvalue", arguments.field);
+						local.errorMsg = Replace(local.errorMsg, "%%maximum%%", NumberFormat(arguments.field.maxValue, ",0.00"));
+						ArrayAppend(arguments.field.errors, local.errorMsg);
+					}
+				}
 
-		<cfif not ArrayLen(arguments.field.errors) and Len(arguments.value)>
-			<cfset local.value = ReReplace(arguments.value, "[^0-9.-]", "", "all")/>
-			<cfif IsNumeric(local.value)>
-				<cfif StructKeyExists(arguments.field, "maxValue")>
-					<cfif local.value gt arguments.field.maxValue>
-						<cfset local.errorMsg = getErrorMessage("maxvalue", arguments.field)/>
-						<cfset local.errorMsg = Replace(local.errorMsg, "%%maximum%%", NumberFormat(arguments.field.maxValue, ",0.00"))/>
-						<cfset ArrayAppend(arguments.field.errors, local.errorMsg)/>
-					</cfif>
-				</cfif>
-	
-				<cfif StructKeyExists(arguments.field, "minValue")>
-					<cfif local.value lt arguments.field.minValue>
-						<cfset local.errorMsg = getErrorMessage("minvalue", arguments.field)/>
-						<cfset local.errorMsg = Replace(local.errorMsg, "%%minimum%%", NumberFormat(arguments.field.minValue, ",0.00"))/>
-						<cfset ArrayAppend(arguments.field.errors, local.errorMsg)/>
-					</cfif>
-				</cfif>
-			</cfif>
-		</cfif>
-	</cffunction>
+				if (StructKeyExists(arguments.field, "minValue"))
+				{
+					if (local.value < arguments.field.minValue)
+					{
+						local.errorMsg = getErrorMessage("minvalue", arguments.field);
+						local.errorMsg = Replace(local.errorMsg, "%%minimum%%", NumberFormat(arguments.field.minValue, ",0.00"));
+						ArrayAppend(arguments.field.errors, local.errorMsg);
+					}
+				}
+			}
+		}
+	}
 
-	<cffunction name="checkAllowedCharacters" access="private" output="no">
-		<cfargument name="field" required="yes"/>
-		<cfargument name="value" required="yes"/>
+	private function checkAllowedCharacters(required field, required value)
+	{
+		var local = {};
 
-		<cfset var local = StructNew()/>
+		if (Len(arguments.value) && ReFind("[^0-9,.-]", arguments.value))
+		{
+			local.errorMsg = getErrorMessage(variables.type & "only", arguments.field);
+			ArrayAppend(arguments.field.errors, local.errorMsg);
+		}
+	}
 
-		<cfif Len(arguments.value) and ReFind("[^0-9,.-]", arguments.value)>
-			<cfset local.errorMsg = getErrorMessage(variables.type & "only", arguments.field)/>
-			<cfset ArrayAppend(arguments.field.errors, local.errorMsg)/>
-		</cfif>
-	</cffunction>
+	/* -------------------- Client Side Validation -------------------- */
 
-	<!--- -------------------- Client Side Validation -------------------- --->
+	private function clientDoCustomValidations(required field, required context)
+	{
+		// See comments for corresponding server side validation.
 
-	<cffunction name="clientDoCustomValidations" access="private" output="no">
-		<cfargument name="field"   required="yes"/>
-		<cfargument name="context" required="yes"/>
+		clientCheckRange(argumentCollection = arguments);
+		clientCheckLength(argumentCollection = arguments);
+		clientCheckAllowedCharacters(argumentCollection = arguments);
+	}
 
-		<!--- See comments for corresponding server side validation. --->
+	private function clientCheckRange(required field, required context)
+	{
+		var local = {};
 
-		<cfset clientCheckRange(argumentCollection = arguments)/>
-		<cfset clientCheckLength(argumentCollection = arguments)/>
-		<cfset clientCheckAllowedCharacters(argumentCollection = arguments)/>
-	</cffunction>
+		if (StructKeyExists(arguments.field, "maxValue"))
+		{
+			if (! StructKeyExists(arguments.context.validationHelpers, "max" & variables.type))
+			{
+				arguments.context.validationHelpers["max" & variables.type] = "function validateMax" & variables.type & "(form,field,limit,errorMsg){var value=new String(form.getValue(field));value=value.replace(/[^0-9-.]/g,'');if(!value.length)return;if(parseFloat(value)>limit)form.addErrorMessage(errorMsg,field);}";
+			}
 
-	<cffunction name="clientCheckRange" access="private" output="no">
-		<cfargument name="field"   required="yes"/>
-		<cfargument name="context" required="yes"/>
+			local.errorMsg = getErrorMessage("maxvalue", arguments.field);
+			local.errorMsg = Replace(local.errorMsg, "%%maximum%%", NumberFormat(arguments.field.maxValue, ",0.00"));
+			arguments.context.output.append("validateMax" & variables.type & "(this,'" & arguments.field.name & "',#arguments.field.maxValue#,'" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');");
+		}
 
-		<cfset var local = StructNew()/>
+		if (StructKeyExists(arguments.field, "minValue"))
+		{
+			if (! StructKeyExists(arguments.context.validationHelpers, "min" & variables.type))
+			{
+				arguments.context.validationHelpers["min" & variables.type] = "function validateMin" & variables.type & "(form,field,limit,errorMsg){var value=new String(form.getValue(field));value=value.replace(/[^0-9-.]/g,'');if(!value.length)return;if(parseFloat(value)<limit)form.addErrorMessage(errorMsg,field);}";
+			}
 
-		<cfif StructKeyExists(arguments.field, "maxValue")>
-			<cfif not StructKeyExists(arguments.context.validationHelpers, "max" & variables.type)>
-				<cfset arguments.context.validationHelpers["max" & variables.type] = "function validateMax" & variables.type & "(form,field,limit,errorMsg){var value=new String(form.getValue(field));value=value.replace(/[^0-9-.]/g,'');if(!value.length)return;if(parseFloat(value)>limit)form.addErrorMessage(errorMsg,field);}"/>
-			</cfif>
+			local.errorMsg = getErrorMessage("minvalue", arguments.field);
+			local.errorMsg = Replace(local.errorMsg, "%%minimum%%", NumberFormat(arguments.field.minValue, ",0.00"));
+			arguments.context.output.append("validateMin" & variables.type & "(this,'" & arguments.field.name & "',#arguments.field.minValue#,'" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');");
+		}
+	}
 
-			<cfset local.errorMsg = getErrorMessage("maxvalue", arguments.field)/>
-			<cfset local.errorMsg = Replace(local.errorMsg, "%%maximum%%", NumberFormat(arguments.field.maxValue, ",0.00"))/>
-			<cfset arguments.context.output.append("validateMax" & variables.type & "(this,'" & arguments.field.name & "',#arguments.field.maxValue#,'" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');")/>
-		</cfif>
+	private function clientCheckAllowedCharacters(required field, required context)
+	{
+		var local = {};
 
-		<cfif StructKeyExists(arguments.field, "minValue")>
-			<cfif not StructKeyExists(arguments.context.validationHelpers, "min" & variables.type)>
-				<cfset arguments.context.validationHelpers["min" & variables.type] = "function validateMin" & variables.type & "(form,field,limit,errorMsg){var value=new String(form.getValue(field));value=value.replace(/[^0-9-.]/g,'');if(!value.length)return;if(parseFloat(value)<limit)form.addErrorMessage(errorMsg,field);}"/>
-			</cfif>
+		if (! StructKeyExists(arguments.context.validationHelpers, "validate" & variables.type))
+		{
+			arguments.context.validationHelpers["validate" & variables.type] = "function validate" & variables.type & "(form,field,errorMsg){var value=form.getValue(field);if(value.search(/[^0-9-.,]/)>=0||value.search(/\..*\./)>=0)form.addErrorMessage(errorMsg,field);}";
+		}
 
-			<cfset local.errorMsg = getErrorMessage("minvalue", arguments.field)/>
-			<cfset local.errorMsg = Replace(local.errorMsg, "%%minimum%%", NumberFormat(arguments.field.minValue, ",0.00"))/>
-			<cfset arguments.context.output.append("validateMin" & variables.type & "(this,'" & arguments.field.name & "',#arguments.field.minValue#,'" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');")/>
-		</cfif>
-	</cffunction>
+		local.errorMsg = getErrorMessage(variables.type & "only", arguments.field);
+		arguments.context.output.append("validate" & variables.type & "(this,'" & arguments.field.name & "','" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');");
+	}
 
-	<cffunction name="clientCheckAllowedCharacters" access="private" output="no">
-		<cfargument name="field"   required="yes"/>
-		<cfargument name="context" required="yes"/>
-
-		<cfset var local = StructNew()/>
-
-		<cfif not StructKeyExists(arguments.context.validationHelpers, "validate" & variables.type)>
-			<cfset arguments.context.validationHelpers["validate" & variables.type] = "function validate" & variables.type & "(form,field,errorMsg){var value=form.getValue(field);if(value.search(/[^0-9-.,]/)>=0||value.search(/\..*\./)>=0)form.addErrorMessage(errorMsg,field);}"/>
-		</cfif>
-
-		<cfset local.errorMsg = getErrorMessage(variables.type & "only", arguments.field)/>
-		<cfset arguments.context.output.append("validate" & variables.type & "(this,'" & arguments.field.name & "','" & JSStringFormat(HTMLEditFormat(local.errorMsg)) & "');")/>
-	</cffunction>
-
+</cfscript>
 </cfcomponent>

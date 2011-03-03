@@ -316,13 +316,13 @@
 
 		<cfswitch expression="#ListFirst(arguments.type, ":")#">
 			<cfcase value="state">
-				<cfset local.data = ListToArray(local.snippetsPlugin.getSnippet("usa_states_short", "common"))/>
+				<cfset local.data = ListToArray(local.snippetsPlugin.getSnippet("usa_states_short"))/>
 			</cfcase>
 			<cfcase value="stateVerbose">
-				<cfset local.data = local.snippetsPlugin.getSnippet("usa_states_long", "common")/>
+				<cfset local.data = local.snippetsPlugin.getSnippet("usa_states_long")/>
 			</cfcase>
 			<cfcase value="country">
-				<cfset local.data = local.snippetsPlugin.getSnippet("countries_long", "common")/>
+				<cfset local.data = local.snippetsPlugin.getSnippet("countries_long")/>
 			</cfcase>
 			<cfcase value="count">
 				<cfset local.params = ListRest(arguments.type, ":")/>
@@ -370,7 +370,7 @@
 				<cfset ArrayAppend(local.data, local.temp)/>
 			</cfcase>
 			<cfdefaultcase>
-				<cfset local.data = ListToArray(local.snippetsPlugin.getSnippet(arguments.type, "_common"))/>
+				<cfset local.data = ListToArray(local.snippetsPlugin.getSnippet(arguments.type))/>
 			</cfdefaultcase>
 		</cfswitch>
 

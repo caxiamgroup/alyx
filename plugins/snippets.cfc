@@ -7,7 +7,7 @@
 
 	<cffunction name="getSnippet" output="false" access="public" returntype="string" hint="Return text for a given snippet">
 		<cfargument name="snippetId" required="yes"/>
-		<cfargument name="pageId"    default="_common"/>
+		<cfargument name="pageId"    default="common"/>
 
 		<cfset var value = ""/>
 

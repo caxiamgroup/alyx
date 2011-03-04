@@ -246,7 +246,8 @@
 
 			if (StructKeyExists(arguments.bean, "set#local.fieldName#"))
 			{
-				evaluate("arguments.bean.set#local.fieldName#(""#getFieldValue(local.field.name)#"")");
+				local.fieldValue = getFieldValue(local.field.name);
+				evaluate("arguments.bean.set#local.fieldName#(local.fieldValue)");
 			}
 		}
 	}

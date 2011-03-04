@@ -526,7 +526,11 @@
 			<cfset arguments.persistUrl = "?" & arguments.persistUrl>
 		</cfif>
 
-		<cflocation url="#arguments.action#.cfm#arguments.persistUrl#" addtoken="no"/>
+		<cfif Len(arguments.action) and Right(arguments.action, 1) neq "/">
+			<cfset arguments.action &= ".cfm"/>
+		</cfif>
+
+		<cflocation url="#arguments.action##arguments.persistUrl#" addtoken="no"/>
 	</cffunction>
 
 	<cffunction name="storePersistentContext" access="public" output="no">

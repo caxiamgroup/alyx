@@ -162,46 +162,47 @@
 			<cfreturn ""/>
 		</cfif>
 
-		<cfset local.validationHelpers = StructNew()/>
-
-		<cfset local.output = CreateObject("java", "java.lang.StringBuffer")/>
+		<cfset local.context = {
+			validationHelpers = {},
+			output = CreateObject("java", "java.lang.StringBuffer")
+		}/>
 
 		<cfset local.hasContent = false/>
-		<cfset local.output.append('<script type="text/javascript">var ')/>
+		<cfset local.context.output.append('<script type="text/javascript">var ')/>
 
 		<cfloop collection="#local.rc.forms#" item="local.formName">
 			<cfset local.form = local.rc.forms[local.formName]/>
 			<cfif local.form.getShowClientSideValidationScript()>
 				<cfset local.hasContent = true/>
 				<cfset local.fields = local.form.getFields()/>
-				<cfset local.output.append("formRef=new FormValidation('" & local.formName & "');")/>
+				<cfset local.context.output.append("formRef=new FormValidation('" & local.formName & "');")/>
 				<cfloop array="#local.fields#" index="local.field">
 					<cfif local.field.required eq true>
 						<cfset local.required = 1/>
 					<cfelse>
 						<cfset local.required = 0/>
 					</cfif>
-					<cfset local.output.append("formRef.addField('" & local.field.name & "'," & local.required & ");")/>
+					<cfset local.context.output.append("formRef.addField('" & local.field.name & "'," & local.required & ");")/>
 				</cfloop>
-				<cfset local.output.append("formRef.validate=function(){this.clearErrorMessages();")/>
+				<cfset local.context.output.append("formRef.validate=function(){this.clearErrorMessages();")/>
 				<cfloop array="#local.fields#" index="local.field">
 					<cfset local.validator = getValidator(local.field.type)/>
-					<cfset local.validator.getClientSideValidationScript(field = local.field, context = local)/>
+					<cfset local.validator.getClientSideValidationScript(field = local.field, context = local.context)/>
 				</cfloop>
-				<cfset local.form.getClientSideValidationScript(context = local)/>
-				<cfset local.output.append("return this.onValidationComplete();};")/>
-				<cfset local.output.append("validationForms['" & local.formName & "']=formRef;")/>
-				<cfset local.output.append("function getErrorHeading(){return '" & JSStringFormat(HtmlEditFormat(application.controller.getPlugin("snippets").getSnippet("errorheading", "errormessages"))) & "'};")/>
+				<cfset local.form.getClientSideValidationScript(context = local.context)/>
+				<cfset local.context.output.append("return this.onValidationComplete();};")/>
+				<cfset local.context.output.append("validationForms['" & local.formName & "']=formRef;")/>
+				<cfset local.context.output.append("function getErrorHeading(){return '" & JSStringFormat(HtmlEditFormat(application.controller.getPlugin("snippets").getSnippet("errorheading", "errormessages"))) & "'};")/>
 			</cfif>
 		</cfloop>
 
 		<cfif local.hasContent>
-			<cfloop collection="#local.validationHelpers#" item="local.helper">
-				<cfset local.output.append(Trim(local.validationHelpers[local.helper]))/>
+			<cfloop collection="#local.context.validationHelpers#" item="local.helper">
+				<cfset local.context.output.append(Trim(local.context.validationHelpers[local.helper]))/>
 			</cfloop>
 
-			<cfset local.output.append("</script>")/>
-			<cfreturn local.output.toString()/>
+			<cfset local.context.output.append("</script>")/>
+			<cfreturn local.context.output.toString()/>
 		</cfif>
 
 		<cfreturn ""/>

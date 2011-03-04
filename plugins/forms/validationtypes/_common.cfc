@@ -3,6 +3,14 @@
 
 	function init()
 	{
+		/*
+			Having this local reference to the error messages makes a significant
+			improvement in the amount of time it takes to render the client side
+			validation scripts, due to the removal of the 'getPlugin("snippets")'
+			call.
+		*/
+		variables.errorMessages = application.controller.getPlugin("snippets").getSnippets("errormessages");
+
 		return this;
 	}
 
@@ -36,7 +44,7 @@
 		}
 		else
 		{
-			local.errorMsg = application.controller.getPlugin("snippets").getSnippet(arguments.messageId, "errormessages");
+			local.errorMsg = variables.errorMessages[arguments.messageId];
 		}
 		local.errorMsg = Replace(local.errorMsg, "%%fieldname%%", arguments.field.label);
 

@@ -1,50 +1,61 @@
 <cfcomponent name="snippets" hint="Common snippets plugin" output="false">
+<cfscript>
 
-	<cffunction name="init" access="public" returntype="snippets" output="false">
-		<cfset loadSnippets()/>
-		<cfreturn this/>
-	</cffunction>
+	function init()
+	{
+		loadSnippets();
+		return this;
+	}
 
-	<cffunction name="getSnippet" output="false" access="public" returntype="string" hint="Return text for a given snippet">
-		<cfargument name="snippetId" required="yes"/>
-		<cfargument name="pageId"    default="common"/>
+	function getSnippet(required snippetId, pageId = "common", defaultValue = "")
+	{
+		if (StructKeyExists(variables.snippets, arguments.pageId) &&
+			StructKeyExists(variables.snippets[arguments.pageId], arguments.snippetId))
+		{
+			return variables.snippets[arguments.pageId][arguments.snippetId];
+		}
 
-		<cfset var value = ""/>
+		return arguments.defaultValue;
+	}
 
-		<cfif StructKeyExists(variables.snippets, arguments.pageId) and
-			StructKeyExists(variables.snippets[arguments.pageId], arguments.snippetId)>
-			<cfset value = variables.snippets[arguments.pageId][arguments.snippetId]/>
-		</cfif>
+	function getSnippets(required pageId)
+	{
+		return variables.snippets[arguments.pageId];
+	}
 
-		<cfreturn value/>
-	</cffunction>
+	function loadSnippets()
+	{
+		var local = {};
 
-	<cffunction name="loadSnippets" output="false" access="private" returntype="string" hint="Loads common snippets">
-		<cfset var local = StructNew()/>
+		// Get snippets from framework
 
-		<!--- Get snippets from framework --->
+		local.file = ExpandPath("/alyx/config/snippets.json");
+		local.data = FileRead(local.file);
+		local.snippets = DeSerializeJson(local.data);
 
-		<cfset local.file = ExpandPath("/alyx/config/snippets.json")/>
-		<cffile action="read" file="#local.file#" variable="local.data"/>
-		<cfset local.snippets = DeSerializeJson(local.data)/>
+		// Get snippets from website
 
-		<!--- Get snippets from website --->
+		local.file = ExpandPath("/config/snippets.json");
+		if (FileExists(local.file))
+		{
+			local.data = FileRead(local.file);
+			local.siteSnippets = DeSerializeJson(local.data);
 
-		<cfset local.file = ExpandPath("/config/snippets.json")/>
-		<cfif FileExists(local.file)>
-			<cffile action="read" file="#local.file#" variable="local.data"/>
-			<cfset local.siteSnippets = DeSerializeJson(local.data)/>
+			for (local.pageId in local.siteSnippets)
+			{
+				if (StructKeyExists(local.snippets, local.pageId))
+				{
+					StructAppend(local.snippets[local.pageId], local.siteSnippets[local.pageId]);
+				}
+				else
+				{
+					local.snippets[local.pageId] = local.siteSnippets[local.pageId];
+				}
+			}
+		}
 
-			<cfloop collection="#local.siteSnippets#" item="local.pageId">
-				<cfif StructKeyExists(local.snippets, local.pageId)>
-					<cfset StructAppend(local.snippets[local.pageId], local.siteSnippets[local.pageId])/>
-				<cfelse>
-					<cfset local.snippets[local.pageId] = local.siteSnippets[local.pageId]/>
-				</cfif>
-			</cfloop>
-		</cfif>
+		variables.snippets = local.snippets;
+	}
 
-		<cfset variables.snippets = local.snippets/>
-	</cffunction>
-
+</cfscript>
 </cfcomponent>

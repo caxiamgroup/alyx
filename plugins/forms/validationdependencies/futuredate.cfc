@@ -22,7 +22,7 @@
 			local.month = arguments.form.getFieldValue(arguments.params.month);
 			local.year = arguments.form.getFieldValue(arguments.params.year);
 
-			if (! IsNumeric(local.month) || local.month < 1 || local.month > 12 || not IsNumeric(local.year))
+			if (! IsNumeric(local.month) || local.month < 1 || local.month > 12 || ! IsNumeric(local.year))
 			{
 				// Individual date field validation should be completed elsewhere
 				return;

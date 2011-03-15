@@ -290,7 +290,7 @@
 
 	function hasErrors()
 	{
-		return not ArrayIsEmpty(variables.errors);
+		return ! ArrayIsEmpty(variables.errors);
 	}
 
 	function fieldHasErrors(required name)

@@ -62,7 +62,7 @@
 		}
 
 		// Allow CFC requests through directly
-		if (Right(targetPath, 4) eq ".cfc")
+		if (Right(targetPath, 4) == ".cfc")
 		{
 			StructDelete(this, "onRequest");
 			StructDelete(variables, "onRequest");
@@ -110,7 +110,7 @@
 
 	function _isDevEnvironment()
 	{
-		return ListFindNoCase("dev", getEnvironment()) gt 0;
+		return ListFindNoCase("dev", getEnvironment()) > 0;
 	}
 
 	function _getErrorEmailRecipients()
@@ -160,11 +160,11 @@
 		}
 		if (not StructKeyExists(variables.framework, "cacheServices"))
 		{
-			variables.framework.cacheServices = isDevEnvironment() eq false;
+			variables.framework.cacheServices = isDevEnvironment() == false;
 		}
 		if (not StructKeyExists(variables.framework, "cacheControllers"))
 		{
-			variables.framework.cacheControllers = isDevEnvironment() eq false;
+			variables.framework.cacheControllers = isDevEnvironment() == false;
 		}
 		if (not StructKeyExists(variables.framework, "defaultLayout"))
 		{
@@ -212,13 +212,11 @@
 
 	function isRestartRequired()
 	{
-		// Using "IsDefined" to cover IsDefined("URL") condition
-
-		return (not StructKeyExists(application, "initialized") or
+		return (! StructKeyExists(application, "initialized") ||
 			(
-				IsDefined("url.restart") and
-				url.restart eq variables.framework.restartPassword and
-				not StructKeyExists(request, "frameworkInitialized")
+				IsDefined("url.restart") &&
+				url.restart == variables.framework.restartPassword &&
+				! StructKeyExists(request, "frameworkInitialized")
 			)
 		);
 	}
@@ -260,7 +258,7 @@
 			url.action = ListChangeDelims(ListFirst(cgi.script_name, "."), ".", "/");
 		}
 
-		if (ListLen(url.action, ".") eq 1)
+		if (ListLen(url.action, ".") == 1)
 		{
 			request.view = url.action;
 			url.action = "general." & url.action;
@@ -279,7 +277,7 @@
 	}
 	for (item in variables)
 	{
-		if (Left(item, 1) eq "_")
+		if (Left(item, 1) == "_")
 		{
 			func = Mid(item, 2, Len(item));
 			if (StructKeyExists(variables, func))
@@ -313,12 +311,12 @@
 		<cfset var local = {}/>
 		<cfset local.service = ""/>
 
-		<cfif StructKeyExists(application.framework.services, arguments.name) and variables.framework.cacheServices>
+		<cfif StructKeyExists(application.framework.services, arguments.name) && variables.framework.cacheServices>
 			<cfset local.service = application.framework.services[arguments.name]/>
 		<cfelse>
 			<cflock name="framework.services.#arguments.name#" type="exclusive" timeout="20">
 			<cfscript>
-				if (StructKeyExists(application.framework.services, arguments.name) and variables.framework.cacheServices)
+				if (StructKeyExists(application.framework.services, arguments.name) && variables.framework.cacheServices)
 				{
 					local.service = application.framework.services[arguments.name];
 				}
@@ -332,7 +330,7 @@
 					{
 						local.servicePath = "/models." & arguments.name & "." & local.componentName & "Service";
 					}
-					else if (ListLen(arguments.name, ".") gt 1)
+					else if (ListLen(arguments.name, ".") > 1)
 					{
 						local.moduleName = ListFirst(arguments.name, ".");
 						local.modules = application.controller.getModules();
@@ -373,12 +371,12 @@
 		<cfset local.controller = ""/>
 		<cfset local.name = ListDeleteAt(arguments.action, ListLen(arguments.action, "."), ".")/>
 
-		<cfif StructKeyExists(application.framework.controllers, local.name) and variables.framework.cacheControllers>
+		<cfif StructKeyExists(application.framework.controllers, local.name) && variables.framework.cacheControllers>
 			<cfset local.controller = application.framework.controllers[local.name]/>
 		<cfelse>
 			<cflock name="framework.controllers.#local.name#" type="exclusive" timeout="20">
 			<cfscript>
-				if (StructKeyExists(application.framework.controllers, local.name) and variables.framework.cacheControllers)
+				if (StructKeyExists(application.framework.controllers, local.name) && variables.framework.cacheControllers)
 				{
 					local.controller = application.framework.controllers[local.name];
 				}
@@ -430,7 +428,7 @@
 
 		<cfset arguments.method = Replace(arguments.method, "-", "_", "all")/>
 
-		<cfif StructKeyExists(arguments.controller, arguments.method) or StructKeyExists(arguments.controller, "onMissingMethod")>
+		<cfif StructKeyExists(arguments.controller, arguments.method) || StructKeyExists(arguments.controller, "onMissingMethod")>
 			<cftry>
 				<cfset request.viewContext = {}/>
 
@@ -445,7 +443,7 @@
 				</cfif>
 
 				<!--- Not using "default" attribute on cfargument so we can pick up on view changes via a call to setView in the controller method. --->
-				<cfif not StructKeyExists(arguments, "view")>
+				<cfif ! StructKeyExists(arguments, "view")>
 					<cfset arguments.view = request.view/>
 				</cfif>
 				<cfset request.viewContexts[ListChangeDelims(arguments.view, "/", ".")] = request.viewContext/>
@@ -471,17 +469,15 @@
 		<cfset var vc = {}/>
 
 		<cfif arguments.runController>
-
 			<cfset fw_action = ListChangeDelims(arguments.path, ".", "/")/>
-			<cfset fw_action = ListChangeDelims(fw_action, "_", "-") />
+			<cfset fw_action = ListChangeDelims(fw_action, "_", "-")/>
 			<cfif ListLen(fw_action, ".") eq 1>
 				<cfset fw_action = "general." & fw_action/>
 			</cfif>
 
 			<cfset fw_controller = getController(fw_action)/>
 
-			<cfif IsObject(fw_controller) and StructKeyExists(fw_controller, ListLast(fw_action, "."))>
-
+			<cfif IsObject(fw_controller) && StructKeyExists(fw_controller, ListLast(fw_action, "."))>
 				<cfset runControllerMethod(
 					controller = fw_controller,
 					method = ListLast(fw_action, "."),
@@ -526,7 +522,7 @@
 			<cfset arguments.persistUrl = "?" & arguments.persistUrl>
 		</cfif>
 
-		<cfif Len(arguments.action) and Right(arguments.action, 1) neq "/">
+		<cfif Len(arguments.action) && Right(arguments.action, 1) neq "/">
 			<cfset arguments.action &= ".cfm"/>
 		</cfif>
 
@@ -537,7 +533,7 @@
 		<cfargument name="keys" required="yes"/>
 		<cfset var key = ""/>
 		<cflock scope="session" type="exclusive" timeout="10">
-			<cfif not StructKeyExists(session, "persistentContext")>
+			<cfif ! StructKeyExists(session, "persistentContext")>
 				<cfset session.persistentContext = {}/>
 			</cfif>
 			<cfloop list="#arguments.keys#" index="key">
@@ -577,10 +573,10 @@
 			event = arguments.event
 		)/>
 
-		<cfif not isDevEnvironment()>
+		<cfif ! isDevEnvironment()>
 			<cftry>
-				<cfif IsDefined("variables.framework.errorPage") and Len(variables.framework.errorPage)>
-					<cfif not StructKeyExists(url, "errortoken")>
+				<cfif IsDefined("variables.framework.errorPage") && Len(variables.framework.errorPage)>
+					<cfif ! StructKeyExists(url, "errortoken")>
 						<cflocation url="#variables.framework.errorPage#?errortoken=#session.cftoken#" addtoken="false"/>
 					</cfif>
 				<cfelseif FileExists(ExpandPath("/error.cfm"))>

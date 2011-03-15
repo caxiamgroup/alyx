@@ -25,17 +25,17 @@
 
 				if (
 					(
-						local.numValues == -1 and
+						local.numValues == -1 &&
 						Len(arguments.form.getFieldValue(local.field))
 					)
 					or
 					(
-						local.numValues == 0 and
-						not Len(arguments.form.getFieldValue(local.field))
+						local.numValues == 0 &&
+						! Len(arguments.form.getFieldValue(local.field))
 					)
 					or
 					(
-						local.numValues gte local.index and
+						local.numValues >= local.index &&
 						arguments.form.getFieldValue(local.field) == ListGetAt(arguments.params.value, local.index)
 					)
 				)

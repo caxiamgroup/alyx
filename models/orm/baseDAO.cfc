@@ -32,7 +32,14 @@ component output="false" extends="alyx.models.baseDAO"
 
 	public function delete(required bean)
 	{
-		softDelete(arguments.bean);
+		if (StructKeyExists(arguments.bean, "getRecordStatus"))
+		{
+			softDelete(arguments.bean);
+		}
+		else
+		{
+			hardDelete(arguments.bean);
+		}
 	}
 
 	public function hardDelete(required bean)

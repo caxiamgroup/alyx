@@ -43,7 +43,7 @@
 
 			local.environment = variables.framework.getEnvironment();
 
-			if (Len(local.environment) and FileExists(ExpandPath("/plugins/" & arguments.name & "-" & local.environment & ".cfc")))
+			if (Len(local.environment) && FileExists(ExpandPath("/plugins/" & arguments.name & "-" & local.environment & ".cfc")))
 			{
 				local.path = "/plugins." & arguments.name & "-" & local.environment;
 			}
@@ -59,7 +59,7 @@
 
 		local.plugin = CreateObject("component", local.path);
 
-		if (StructKeyExists(arguments, "cache") and arguments.cache eq true)
+		if (StructKeyExists(arguments, "cache") && arguments.cache == true)
 		{
 			variables.plugins[arguments.key] = local.plugin;
 		}
@@ -156,7 +156,7 @@
 			local.views = DirectoryList(local.path, true, "path", "*.cfm");
 			local.numViews = ArrayLen(local.views);
 
-			for (local.index = 1; local.index lte local.numViews; ++local.index)
+			for (local.index = 1; local.index <= local.numViews; ++local.index)
 			{
 				local.file = local.views[local.index];
 				local.file = Replace(local.file, local.path, "");

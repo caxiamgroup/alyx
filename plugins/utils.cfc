@@ -1,77 +1,70 @@
 <cfcomponent>
+<cfscript>
 
-	<cffunction name="safeDollarFormat" output="no">
-		<cfargument name="value" required="yes"/>
-		<cfargument name="defaultValue" default="#arguments.value#"/>
+	function safeDollarFormat(required value, defaultValue = arguments.value)
+	{
+		if (IsNumeric(arguments.value))
+		{
+			return DollarFormat(arguments.value);
+		}
+		return arguments.defaultValue;
+	}
 
-		<cfif IsNumeric(arguments.value)>
-			<cfreturn DollarFormat(arguments.value)/>
-		</cfif>
-		<cfreturn arguments.defaultValue/>
-	</cffunction>
+	function safeDecimalFormat(required value, defaultValue = arguments.value)
+	{
+		if (IsNumeric(arguments.value))
+		{
+			return NumberFormat(arguments.value, ",0.00");
+		}
+		return arguments.defaultValue;
+	}
 
-	<cffunction name="safeDecimalFormat" output="no">
-		<cfargument name="value" required="yes"/>
-		<cfargument name="defaultValue" default="#arguments.value#"/>
+	function safeNumberFormat(required value, defaultValue = arguments.value)
+	{
+		if (IsNumeric(arguments.value))
+		{
+			return NumberFormat(arguments.value, ",0");
+		}
+		return arguments.defaultValue;
+	}
 
-		<cfif IsNumeric(arguments.value)>
-			<cfreturn NumberFormat(arguments.value, ",0.00")/>
-		</cfif>
-		<cfreturn arguments.defaultValue/>
-	</cffunction>
+	function safeDateFormat(required value, format = "mm/dd/yyyy", defaultValue = arguments.value)
+	{
+		if (IsDate(arguments.value))
+		{
+			return DateFormat(arguments.value, arguments.format);
+		}
+		return arguments.defaultValue;
+	}
 
-	<cffunction name="safeNumberFormat" output="no">
-		<cfargument name="value" required="yes"/>
-		<cfargument name="defaultValue" default="#arguments.value#"/>
+	function extractNumber(required value, defaultValue = arguments.value)
+	{
+		var local = {};
 
-		<cfif IsNumeric(arguments.value)>
-			<cfreturn NumberFormat(arguments.value, ",0")/>
-		</cfif>
-		<cfreturn arguments.defaultValue/>
-	</cffunction>
+		local.results = arguments.defaultValue;
+		local.value = ReReplace(arguments.value, "[^0-9.-]", "", "all");
+		if (Len(local.value) && IsNumeric(local.value))
+		{
+			local.results = local.value;
+		}
 
-	<cffunction name="safeDateFormat" output="no">
-		<cfargument name="value" required="yes"/>
-		<cfargument name="format" default="mm/dd/yyyy"/>
-		<cfargument name="defaultValue" default="#arguments.value#"/>
+		return local.results;
+	}
 
-		<cfif IsDate(arguments.value)>
-			<cfreturn DateFormat(arguments.value, arguments.format)/>
-		</cfif>
-		<cfreturn arguments.defaultValue/>
-	</cffunction>
+	function extractDecimal(required value, defaultValue = arguments.value)
+	{
+		var local = {};
 
-	<cffunction name="extractNumber" output="no">
-		<cfargument name="value"   required="yes"/>
-		<cfargument name="default" default=""/>
+		local.results = arguments.defaultValue;
+		local.value = ReReplace(arguments.value, "[^0-9.-]", "", "all");
+		if (Len(local.value) && IsNumeric(local.value))
+		{
+			local.results = NumberFormat(local.value, "0.00");
+		}
 
-		<cfset var local = StructNew()/>
+		return local.results;
+	}
 
-		<cfset local.results = arguments.default/>
-		<cfset local.value = ReReplace(arguments.value, "[^0-9.-]", "", "all")/>
-		<cfif Len(local.value) and IsNumeric(local.value)>
-			<cfset local.results = local.value/>
-		</cfif>
-
-		<cfreturn local.results/>
-	</cffunction>
-
-	<cffunction name="extractDecimal" output="no">
-		<cfargument name="value"   required="yes"/>
-		<cfargument name="default" default=""/>
-
-		<cfset var local = StructNew()/>
-
-		<cfset local.results = arguments.default/>
-		<cfset local.value = ReReplace(arguments.value, "[^0-9.-]", "", "all")/>
-		<cfif Len(local.value) and IsNumeric(local.value)>
-			<cfset local.results = NumberFormat(local.value, "0.00")/>
-		</cfif>
-
-		<cfreturn local.results/>
-	</cffunction>
-
-	<cfscript>
 	function tableFormat(value)
 	{
 		value = Trim(value);
@@ -94,24 +87,24 @@
 		var valueLen = "";
 		var mask = "xxx-xxx-xxxx";
 
-		if (numArgs gte 2 and Len(Trim(arguments[2])))
+		if (numArgs >= 2 && Len(Trim(arguments[2])))
 		{
 			mask = Trim(arguments[2]);
 		}
 
 		tmpValue = ReReplace(value, "[^A-Za-z0-9]", "", "all");
 
-		if (Len(tmpValue) lte 11 and Len(tmpValue) gte 7)
+		if (Len(tmpValue) <= 11 && Len(tmpValue) >= 7)
 		{
 			maskLen = Len(mask);
 			mask = Reverse(mask);
 			tmpValue = Reverse(tmpValue);
 			valueLen = Len(tmpValue);
 
-			for (maskPos = 1; maskPos lte maskLen and valuePos lte valueLen; ++maskPos)
+			for (maskPos = 1; maskPos <= maskLen && valuePos <= valueLen; ++maskPos)
 			{
 				c = Mid(mask, maskPos, 1);
-				if (c eq "x")
+				if (c == "x")
 				{
 					newValue = newValue & Mid(tmpValue, valuePos, 1);
 					valuePos = valuePos + 1;
@@ -122,7 +115,7 @@
 				}
 			}
 			// Special case for closing grouping symbol
-			if (maskPos eq maskLen)
+			if (maskPos == maskLen)
 			{
 				newValue = newValue & Mid(mask, maskPos, 1);
 			}
@@ -139,7 +132,7 @@
 	function emailFormat(value)
 	{
 		value = Trim(value);
-		if (Len(value) and IsValid("email", value))
+		if (Len(value) && IsValid("email", value))
 		{
 			value = "<a href=""mailto:" & value & """>" & value & "</a>";
 		}
@@ -167,84 +160,153 @@
 		}
 		return value & suffix;
 	}
-	</cfscript>
 
-	<cffunction name="addressFormat" output="no">
-		<cfargument name="addressLine1" default=""/>
-		<cfargument name="addressLine2" default=""/>
-		<cfargument name="city" default=""/>
-		<cfargument name="state" default=""/>
-		<cfargument name="zipCode" default=""/>
+	function addressFormat(
+		addressLine1 = "",
+		addressLine2 = "",
+		city = "",
+		state = "",
+		zipCode = ""
+	)
+	{
+		var address = "";
 
-		<cfset var address = ""/>
+		if (Len(arguments.addressLine1))
+		{
+			if (Len(address))
+			{
+				address &= "<br />";
+			}
+			address &= arguments.addressLine1;
+		}
 
-		<cfif Len(arguments.addressLine1)>
-			<cfif Len(address)>
-				<cfset address &= "<br />"/>
-			</cfif>
-			<cfset address &= arguments.addressLine1/>
-		</cfif>
+		if (Len(arguments.addressLine2))
+		{
+			if (Len(address))
+			{
+				address &= "<br />";
+			}
+			address &= arguments.addressLine2;
+		}
 
-		<cfif Len(arguments.addressLine2)>
-			<cfif Len(address)>
-				<cfset address &= "<br />"/>
-			</cfif>
-			<cfset address &= arguments.addressLine2/>
-		</cfif>
+		if (Len(arguments.city) || Len(arguments.state) || Len(arguments.zipCode))
+		{
+			if (Len(address))
+			{
+				address &= "<br />";
+			}
 
-		<cfif Len(arguments.city) or Len(arguments.state) or Len(arguments.zipCode)>
-			<cfif Len(address)>
-				<cfset address &= "<br />"/>
-			</cfif>
+			if (Len(arguments.city))
+			{
+				address &= arguments.city;
 
-			<cfif Len(arguments.city)>
-				<cfset address &= arguments.city/>
+				if (Len(arguments.state))
+				{
+					address &= ", ";
+				}
+			}
 
-				 <cfif Len(arguments.state)>
-					<cfset address &= ", "/>
-				</cfif>
-			</cfif>
+			if (Len(arguments.state))
+			{
+				address &= arguments.state;
+			}
 
-			 <cfif Len(arguments.state)>
-				<cfset address &= arguments.state/>
-			</cfif>
+			if (Len(arguments.zipCode))
+			{
+				if (Len(arguments.city) or Len(arguments.state))
+				{
+					address &= "&nbsp;&nbsp;";
+				}
 
-			<cfif Len(arguments.zipCode)>
-				<cfif Len(arguments.city) or Len(arguments.state)>
-					<cfset address &= "&nbsp;&nbsp;"/>
-				</cfif>
+				address &= arguments.zipCode;
+			}
+		}
 
-				<cfset address &= arguments.zipCode/>
-			</cfif>
-		</cfif>
+		return address;
+	}
 
-		<cfreturn address/>
-	</cffunction>
+	function displayErrors(open = "", close = "")
+	{
+		var local = {};
 
-	<cffunction name="displayErrors" output="no">
-		<cfargument name="open" default=""/>
-		<cfargument name="close" default=""/>
+		local.output = "";
 
-		<cfset var local = StructNew()/>
-		<cfset local.output = ""/>
+		if (! StructKeyExists(arguments, "errors") && StructKeyExists(request.context, "errors"))
+		{
+			arguments.errors = request.context.errors;
+		}
 
-		<cfif not StructKeyExists(arguments, "errors") and StructKeyExists(request.context, "errors")>
-			<cfset arguments.errors = request.context.errors/>
-		</cfif>
+		if (StructKeyExists(arguments, "errors") && IsArray(arguments.errors) && ! ArrayIsEmpty(arguments.errors))
+		{
+			local.output = arguments.open & "<div class=""error"">The following problems were found:</div><ul class=""error"">";
+			for (local.error in arguments.errors)
+			{
+				local.output &= "<li>#local.error#</li>";
+			}
+			local.output &= "</ul>" & arguments.close;
+		}
 
-		<cfif StructKeyExists(arguments, "errors") and IsArray(arguments.errors) and not ArrayIsEmpty(arguments.errors)>
-			<cfset local.output = arguments.open & "<div class=""error"">The following problems were found:</div><ul class=""error"">"/>
-				<cfloop array="#arguments.errors#" index="local.error">
-					<cfset local.output &= "<li>#local.error#</li>"/>
-				</cfloop>
-			<cfset local.output &= "</ul>" & arguments.close/>
-		</cfif>
-		<cfreturn local.output/>
-	</cffunction>
+		return local.output;
+	}
 
-	<cffunction name="getForm" output="no">
-		<cfargument name="name" required="true"/>
-		<cfreturn application.controller.getPlugin("forms").getForm(arguments.name)/>
-	</cffunction>
+	function getForm(required name)
+	{
+		return application.controller.getPlugin("forms").getForm(arguments.name);
+	}
 
+	function queryToArray(required data, startRow = "", endRow = "")
+	{
+		var local = {};
+
+		local.columns = ListToArray(arguments.data.columnList);
+		local.converted = [];
+		local.numRows = arguments.data.recordCount;
+
+		arguments.startRow = Min(Max(Val(arguments.startRow), 1), local.numRows);
+		arguments.endRow = Min(Max(Val(arguments.endRow), 1), local.numRows);
+
+		// Not calling queryToStruct in inner loop for performance reasons
+
+		for (local.rowIndex = arguments.startrow; local.rowIndex <= arguments.endrow; ++local.rowIndex)
+		{
+			local.row = {};
+
+			for (local.column in local.columns)
+			{
+				local.row[local.column] = arguments.data[local.column][local.rowIndex];
+			}
+
+			ArrayAppend(local.converted, local.row);
+
+		}
+
+		return local.converted;
+	}
+
+	function queryToStruct(required data, rowIndex = 1)
+	{
+		var local = {};
+
+		local.columns = ListToArray(arguments.data.columnList);
+		local.row = {};
+
+		if (arguments.data.recordCount >= arguments.rowIndex)
+		{
+			for (local.column in local.columns)
+			{
+				local.row[local.column] = arguments.data[local.column][arguments.rowIndex];
+			}
+		}
+		else
+		{
+			for (local.column in local.columns)
+			{
+				local.row[local.column] = "";
+			}
+		}
+
+		return local.row;
+	}
+
+</cfscript>
 </cfcomponent>

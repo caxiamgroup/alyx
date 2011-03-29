@@ -258,26 +258,53 @@
 	{
 		var local = {};
 
-		local.columns = ListToArray(arguments.data.columnList);
 		local.converted = [];
 		local.numRows = arguments.data.recordCount;
 
-		arguments.startRow = Min(Max(Val(arguments.startRow), 1), local.numRows);
-		arguments.endRow = Min(Max(Val(arguments.endRow), 1), local.numRows);
-
-		// Not calling queryToStruct in inner loop for performance reasons
-
-		for (local.rowIndex = arguments.startrow; local.rowIndex <= arguments.endrow; ++local.rowIndex)
+		if (local.numRows > 0)
 		{
-			local.row = {};
+			local.columns = ListToArray(arguments.data.columnList);
 
-			for (local.column in local.columns)
+			if (not IsNumeric(arguments.startRow))
 			{
-				local.row[local.column] = arguments.data[local.column][local.rowIndex];
+				arguments.startRow = 1;
+			}
+			if (arguments.startRow < 1)
+			{
+				arguments.startRow = 1;
+			}
+			if (arguments.startRow > local.numRows)
+			{
+				arguments.startRow = local.numRows;
 			}
 
-			ArrayAppend(local.converted, local.row);
+			if (not IsNumeric(arguments.endRow))
+			{
+				arguments.endRow = local.numRows;
+			}
+			if (arguments.endRow < 1)
+			{
+				arguments.endRow = 1;
+			}
+			if (arguments.endRow > local.numRows)
+			{
+				arguments.endRow = local.numRows;
+			}
 
+			// Not calling queryToStruct in inner loop for performance reasons
+
+			for (local.rowIndex = arguments.startRow; local.rowIndex <= arguments.endRow; ++local.rowIndex)
+			{
+				local.row = {};
+
+				for (local.column in local.columns)
+				{
+					local.row[local.column] = arguments.data[local.column][local.rowIndex];
+				}
+
+				ArrayAppend(local.converted, local.row);
+
+			}
 		}
 
 		return local.converted;

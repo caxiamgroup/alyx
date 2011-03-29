@@ -49,8 +49,6 @@
 
 		setupRequest();
 
-		request.controller = getController(request.action);
-
 		if (not StructKeyExists(request, "layout"))
 		{
 			request.layout = variables.framework.defaultLayout;
@@ -73,13 +71,23 @@
 
 	function _onRequest(targetPath)
 	{
-		request.viewContexts = {};
+		var content = "";
 
-		if (IsObject(request.controller))
+		try
 		{
-			runControllerMethod(request.controller, ListLast(request.action, "."));
+			content = view(action = request.action);
+
+			if (Len(request.layout))
+			{
+				content = variables.layout(request.layout, content);
+			}
+
+			WriteOutput(content);
 		}
-		WriteOutput(renderView());
+		catch(MissingTopLevelView error)
+		{
+			onMissingView(error.extendedInfo);
+		}
 	}
 
 	function _onRequestEnd()
@@ -116,29 +124,6 @@
 	function _getErrorEmailRecipients()
 	{
 		return "";
-	}
-
-	function renderView()
-	{
-		var content = "";
-
-		if (not StructKeyExists(arguments, "view"))
-		{
-			arguments.view = request.view;
-		}
-		if (Len(arguments.view))
-		{
-			content = variables.view(ListChangeDelims(arguments.view, "/", "."), false);
-		}
-		if (not StructKeyExists(arguments, "layout"))
-		{
-			arguments.layout = request.layout;
-		}
-		if (Len(arguments.layout))
-		{
-			content = variables.layout(arguments.layout, content);
-		}
-		return content;
 	}
 
 	function getContext()
@@ -263,11 +248,6 @@
 			request.view = url.action;
 			url.action = "general." & url.action;
 		}
-	}
-
-	function runAction(action)
-	{
-		runControllerMethod(getController(arguments.action), ListLast(arguments.action, "."));
 	}
 
 	// Populate "super" scope
@@ -421,32 +401,33 @@
 		<cfreturn local.controller/>
 	</cffunction>
 
-	<cffunction name="runControllerMethod" access="private" output="no">
-		<cfargument name="controller"/>
-		<cfargument name="method"/>
+	<cffunction name="runControllerMethod" output="no">
+		<cfargument name="controller" required="false"/>
+		<cfargument name="method" required="false"/>
 		<cfargument name="view" required="false"/>
+		<cfargument name="action" required="false"/>
+		<cfargument name="vc" default="#StructNew()#"/>
+
+		<cfif StructKeyExists(arguments, "action")>
+			<cfset arguments.controller = getController(arguments.action)/>
+			<cfset arguments.method = ListLast(arguments.action, ".")/>
+		<cfelseif not StructKeyExists(arguments, "controller") or not StructKeyExists(arguments, "method")>
+			<cfthrow message="Missing arguments"/>
+		</cfif>
 
 		<cfset arguments.method = Replace(arguments.method, "-", "_", "all")/>
 
-		<cfif StructKeyExists(arguments.controller, arguments.method) || StructKeyExists(arguments.controller, "onMissingMethod")>
+		<cfif not IsSimpleValue(arguments.controller) && (StructKeyExists(arguments.controller, arguments.method) || StructKeyExists(arguments.controller, "onMissingMethod"))>
 			<cftry>
-				<cfset request.viewContext = {}/>
-
 				<cfif StructKeyExists(arguments.controller, "onBeforeControllerMethod")>
-					<cfinvoke component="#arguments.controller#" method="onBeforeControllerMethod" rc="#request.context#" vc="#request.viewContext#" methodName="#arguments.method#"/>
+					<cfinvoke component="#arguments.controller#" method="onBeforeControllerMethod" rc="#request.context#" vc="#arguments.vc#" methodName="#arguments.method#"/>
 				</cfif>
 
-				<cfinvoke component="#arguments.controller#" method="#arguments.method#" rc="#request.context#" vc="#request.viewContext#"/>
+				<cfinvoke component="#arguments.controller#" method="#arguments.method#" rc="#request.context#" vc="#arguments.vc#"/>
 
 				<cfif StructKeyExists(arguments.controller, "onAfterControllerMethod")>
-					<cfinvoke component="#arguments.controller#" method="onAfterControllerMethod" rc="#request.context#" vc="#request.viewContext#" methodName="#arguments.method#"/>
+					<cfinvoke component="#arguments.controller#" method="onAfterControllerMethod" rc="#request.context#" vc="#arguments.vc#" methodName="#arguments.method#"/>
 				</cfif>
-
-				<!--- Not using "default" attribute on cfargument so we can pick up on view changes via a call to setView in the controller method. --->
-				<cfif ! StructKeyExists(arguments, "view")>
-					<cfset arguments.view = request.view/>
-				</cfif>
-				<cfset request.viewContexts[ListChangeDelims(arguments.view, "/", ".")] = request.viewContext/>
 
 				<cfcatch type="any">
 					<cfset request.failedCfcName = getMetadata(arguments.controller).fullname/>
@@ -458,38 +439,73 @@
 	</cffunction>
 
 	<cffunction name="view" output="no">
-		<cfargument name="path"/>
-		<cfargument name="runController" default="false"/>
+		<cfargument name="path" required="false"/>
+		<cfargument name="action" required="false"/>
+
+		<cfset var local = StructNew()/>
+
+		<cfset local.content = ""/>
+		<cfset local.vc = StructNew()/>
+
+		<cfif StructKeyExists(arguments, "arguments")>
+			<cfset StructAppend(local.vc, arguments.arguments)/>
+		</cfif>
+
+		<cfif StructKeyExists(arguments, "action")>
+			<cfif ListLen(arguments.action, ".") eq 1>
+				<cfset arguments.action = "general." & arguments.action/>
+			</cfif>
+
+			<cfset local.view = request.view/>
+
+			<cfset runControllerMethod(action = arguments.action, vc = local.vc)/>
+
+			<cfif request.view neq local.view>
+				<cfset local.temp = request.view/>
+				<cfset request.view = local.view/>
+				<cfset arguments.path = local.temp/>
+			<cfelse>
+				<cfset arguments.path = ListChangeDelims(arguments.action, "/", ".")/>
+			</cfif>
+
+			<cfif ListFirst(arguments.path, "/") eq "general">
+				<cfset arguments.path = ListRest(arguments.path, "/")/>
+			</cfif>
+		<cfelseif not StructKeyExists(arguments, "path")>
+			<cfthrow message="Missing arguments"/>
+		</cfif>
+
+		<cfparam name="request.viewDepth" default="0"/>
+		<cfset ++request.viewDepth/>
+
+		<cfif Len(arguments.path)>
+			<cftry>
+				<cfset local.content = renderView(path = arguments.path, vc = local.vc)/>
+
+				<cfcatch type="MissingInclude">
+					<cfif request.viewDepth eq 1>
+						<cfthrow type="MissingTopLevelView" extendedInfo="#cfcatch.missingFileName#"/>
+					<cfelse>
+						<cfrethrow/>
+					</cfif>
+				</cfcatch>
+			</cftry>
+		</cfif>
+
+		<cfset --request.viewDepth/>
+
+		<cfreturn local.content/>
+	</cffunction>
+
+	<cffunction name="_renderView" access="private" output="no">
+		<cfargument name="path" required="true"/>
+		<cfargument name="vc" default="#StructNew()#"/>
 
 		<cfset var fw_out = ""/>
-		<cfset var fw_action = ""/>
-		<cfset var fw_controller = ""/>
 
 		<cfset var rc = request.context/>
-		<cfset var vc = {}/>
 
-		<cfif arguments.runController>
-			<cfset fw_action = ListChangeDelims(arguments.path, ".", "/")/>
-			<cfset fw_action = ListChangeDelims(fw_action, "_", "-")/>
-			<cfif ListLen(fw_action, ".") eq 1>
-				<cfset fw_action = "general." & fw_action/>
-			</cfif>
-
-			<cfset fw_controller = getController(fw_action)/>
-
-			<cfif IsObject(fw_controller) && StructKeyExists(fw_controller, ListLast(fw_action, "."))>
-				<cfset runControllerMethod(
-					controller = fw_controller,
-					method = ListLast(fw_action, "."),
-					view = arguments.path
-				)/>
-			</cfif>
-		</cfif>
-
-		<cfif StructKeyExists(request.viewContexts, arguments.path)>
-			<cfset vc = request.viewContexts[arguments.path]/>
-			<cfset StructAppend(variables, vc)/>
-		</cfif>
+		<cfset StructAppend(variables, arguments.vc)/>
 
 		<cfsavecontent variable="fw_out"><cfinclude template="#application.controller.getViewPath(arguments.path)#.cfm"/></cfsavecontent>
 
@@ -556,6 +572,16 @@
 				<!--- Ignore --->
 			</cfcatch>
 		</cftry>
+	</cffunction>
+
+	<cffunction name="_onMissingView" output="yes">
+		<cfargument name="path" required="true"/>
+
+		<cfif FileExists(ExpandPath("/404.cfm"))>
+			<cfinclude template="/404.cfm"/>
+		<cfelse>
+			<cflocation url="/index.cfm" addtoken="false"/>
+		</cfif>
 	</cffunction>
 
 	<cffunction name="_onError" output="yes">

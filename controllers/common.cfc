@@ -91,9 +91,9 @@
 		setView("");
 	}
 
-	function runAction(action)
+	function runControllerMethod()
 	{
-		return application.controller.runAction(arguments.action);
+		return application.controller.runControllerMethod(argumentCollection = arguments);
 	}
 
 	function redirect(action)

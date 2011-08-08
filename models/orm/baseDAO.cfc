@@ -34,7 +34,7 @@ component output="false" extends="alyx.models.baseDAO"
 	{
 		if (StructKeyExists(arguments.bean, "getRecordStatus"))
 		{
-		softDelete(arguments.bean);
+			softDelete(arguments.bean);
 		}
 		else
 		{

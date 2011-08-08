@@ -24,7 +24,7 @@
 	{
 		arguments.key = "search-" & arguments.key;
 
-		if (StructKeyExists(arguments, "reset") and arguments.reset eq true)
+		if (StructKeyExists(arguments, "reset") && arguments.reset == true)
 		{
 			application.controller.getPlugin("session").deleteVar(arguments.key);
 		}
@@ -91,9 +91,9 @@
 		setView("");
 	}
 
-	function runAction(action)
+	function runControllerMethod()
 	{
-		return application.controller.runAction(arguments.action);
+		return application.controller.runControllerMethod(argumentCollection = arguments);
 	}
 
 	function redirect(action)
@@ -131,7 +131,7 @@
 		var paging = Duplicate(arguments);
 		var tempPageRange = Max(paging.pageRange - 1, 1);
 
-		if (paging.recordCount gt 0)
+		if (paging.recordCount > 0)
 		{
 			paging.numPages = Ceiling(paging.recordCount / paging.pageSize);
 
@@ -143,14 +143,14 @@
 			paging.startPage = Max(paging.startPage, 1);
 
 			paging.endPage = paging.startPage + tempPageRange;
-			if (paging.endPage gt paging.numPages)
+			if (paging.endPage > paging.numPages)
 			{
 				paging.endPage = paging.numPages;
 				paging.startPage = paging.endPage - tempPageRange;
 				paging.startPage = Max(paging.startPage, 1);
 			}
 
-			if (paging.currentPage gt 1)
+			if (paging.currentPage > 1)
 			{
 				paging.prevPage = paging.currentPage - 1;
 			}
@@ -159,7 +159,7 @@
 				paging.prevPage = "";
 			}
 
-			if (paging.currentPage lt paging.numPages)
+			if (paging.currentPage < paging.numPages)
 			{
 				paging.nextPage = paging.currentPage + 1;
 			}

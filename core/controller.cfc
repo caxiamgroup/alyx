@@ -43,7 +43,7 @@
 
 			local.environment = variables.framework.getEnvironment();
 
-			if (Len(local.environment) and FileExists(ExpandPath("/plugins/" & arguments.name & "-" & local.environment & ".cfc")))
+			if (Len(local.environment) && FileExists(ExpandPath("/plugins/" & arguments.name & "-" & local.environment & ".cfc")))
 			{
 				local.path = "/plugins." & arguments.name & "-" & local.environment;
 			}
@@ -59,7 +59,7 @@
 
 		local.plugin = CreateObject("component", local.path);
 
-		if (StructKeyExists(arguments, "cache") and arguments.cache eq true)
+		if (StructKeyExists(arguments, "cache") && arguments.cache == true)
 		{
 			variables.plugins[arguments.key] = local.plugin;
 		}
@@ -129,10 +129,10 @@
 			}
 		}
 
-		scanModuleDirectory("/alyx/modules/" & arguments.name & "/views", arguments.name, variables.views);
-		scanModuleDirectory("/modules/" & arguments.name & "/views", arguments.name, variables.views);
-		scanModuleDirectory("/alyx/modules/" & arguments.name & "/layouts", arguments.name, variables.layouts);
-		scanModuleDirectory("/modules/" & arguments.name & "/layouts", arguments.name, variables.layouts);
+		scanFrameworkDirectory("/alyx/modules/" & arguments.name & "/views", arguments.name, variables.views);
+		scanFrameworkDirectory("/modules/" & arguments.name & "/views", arguments.name, variables.views);
+		scanFrameworkDirectory("/alyx/modules/" & arguments.name & "/layouts", arguments.name, variables.layouts);
+		scanFrameworkDirectory("/modules/" & arguments.name & "/layouts", arguments.name, variables.layouts);
 	}
 
 	function getModule(name)
@@ -145,7 +145,25 @@
 		return variables.modules;
 	}
 
-	function scanModuleDirectory(path, name, group)
+	function scanViewDirectory(path, name)
+	{
+		scanFrameworkDirectory(
+			path = arguments.path,
+			name = arguments.name,
+			group = variables.views
+		);
+	}
+
+	function scanLayoutDirectory(path, name)
+	{
+		scanFrameworkDirectory(
+			path = arguments.path,
+			name = arguments.name,
+			group = variables.layouts
+		);
+	}
+
+	function scanFrameworkDirectory(path, name, group)
 	{
 		var local = {};
 
@@ -156,7 +174,7 @@
 			local.views = DirectoryList(local.path, true, "path", "*.cfm");
 			local.numViews = ArrayLen(local.views);
 
-			for (local.index = 1; local.index lte local.numViews; ++local.index)
+			for (local.index = 1; local.index <= local.numViews; ++local.index)
 			{
 				local.file = local.views[local.index];
 				local.file = Replace(local.file, local.path, "");
@@ -169,6 +187,8 @@
 
 	function getViewPath(view)
 	{
+		arguments.view = ReReplace(arguments.view, "^/", "");
+
 		if (StructKeyExists(variables.views, arguments.view))
 		{
 			return variables.views[arguments.view];
@@ -178,6 +198,8 @@
 
 	function getLayoutPath(layout)
 	{
+		arguments.layout = ReReplace(arguments.layout, "^/", "");
+
 		if (StructKeyExists(variables.layouts, arguments.layout))
 		{
 			return variables.layouts[arguments.layout];
@@ -205,14 +227,9 @@
 		return request.action;
 	}
 
-	function runAction(action)
+	function runControllerMethod()
 	{
-		variables.framework.runAction(argumentCollection = arguments);
-	}
-
-	function renderView()
-	{
-		variables.framework.renderView(argumentCollection = arguments);
+		variables.framework.runControllerMethod(argumentCollection = arguments);
 	}
 
 	function getEnvironment()

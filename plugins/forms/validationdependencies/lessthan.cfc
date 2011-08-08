@@ -7,7 +7,7 @@
 
 		local.fields = ListToArray(arguments.params.fields);
 		if (IsNumeric(arguments.form.getFieldValue(local.fields[1])) && IsNumeric(arguments.form.getFieldValue(local.fields[2]))
-			&& arguments.form.getFieldValue(local.fields[1]) gte arguments.form.getFieldValue(local.fields[2]))
+			&& arguments.form.getFieldValue(local.fields[1]) >= arguments.form.getFieldValue(local.fields[2]))
 		{
 			local.errorMsg = getErrorMessage("lessthan", arguments.params.errorMsg);
 			local.errorMsg = Replace(local.errorMsg, "%%fieldname1%%", arguments.form.getField(local.fields[1]).label);

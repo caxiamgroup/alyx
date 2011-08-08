@@ -60,7 +60,7 @@
 		}
 
 		local.numUsernameChars = Len(variables.usernameChars);
-		while (Len(local.base) lt arguments.minLength)
+		while (Len(local.base) < arguments.minLength)
 		{
 			local.base &= Mid(variables.usernameChars, RandRange(1, local.numUsernameChars), 1);
 		}
@@ -87,12 +87,12 @@
 		do
 		{
 			local.password = "";
-			for (local.index = RandRange(arguments.minLength, arguments.maxLength); local.index gte 1; --local.index)
+			for (local.index = RandRange(arguments.minLength, arguments.maxLength); local.index >= 1; --local.index)
 			{
 				local.password &= Mid(variables.passwordChars, RandRange(1, local.numPasswordChars), 1);
 			}
 		}
-		while (REFind(variables.passwordRegExp, local.password) eq 0 or REFindNoCase(variables.badWords, local.password) neq 0);
+		while (REFind(variables.passwordRegExp, local.password) == 0 || REFindNoCase(variables.badWords, local.password) neq 0);
 
 		return local.password;
 	}

@@ -48,12 +48,23 @@
 		}
 	}
 
-	package function queryToArray(data)
+	package function queryToArray(data, queryArguments = StructNew())
 	{
-		local.results = ArrayNew(1);
+		/*
+			MAKE SURE YOUR COLDFUSION CLASS PATHS INCLUDE THE FOLLOWING PATH
+			alyx/java/lib/
+		 */
+		local.results = CreateObject("Java", "PagedArray").init();
 		local.numRows = arguments.data.recordcount;
 		local.columns = ListToArray(arguments.data.columnList);
 		local.numColumns = ArrayLen(local.columns);
+		local.results.setRecordCount(local.numRows);
+		if(StructKeyExists(arguments.queryArguments, "pageIndex") && StructKeyExists(arguments.queryArguments, "pageSize"))
+		{
+			local.results.setRecordCount(variables.dao.getResultRecordCount());
+			local.results.setPageSize(arguments.queryArguments.pageSize);
+			local.results.setPageIndex(arguments.queryArguments.pageIndex);
+		}
 
 		for (local.rowIndex = 1; local.rowIndex <= local.numRows; ++local.rowIndex)
 		{

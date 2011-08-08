@@ -286,7 +286,7 @@
 			<cfelseif IsSimpleValue(arguments.data)>
 				<cfif Find("|", arguments.data)>
 					<cfset local.data = ArrayNew(1)/>
-					<cfloop list="#arguments.data#" index="local.group">
+					<cfloop list="#arguments.data#" index="local.group" delimiters="#arguments.delimiters#">
 						<cfset local.temp = {id = ListFirst(local.group, "|"), label = ListRest(local.group, "|")}/>
 						<cfset ArrayAppend(local.data, local.temp)/>
 					</cfloop>

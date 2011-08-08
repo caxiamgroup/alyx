@@ -1,29 +1,18 @@
 <cfcomponent output="no" extends="text">
 <cfscript>
 
-	function render(
-		required field,
-		required form,
-		extra        = "",
-		value        = arguments.form.getFieldValue(arguments.field.name),
-		showCalendar = true
-	)
+	function render(required field, size = 10, showCalendar = true)
 	{
+		var local = {};
+		local.output = super.render(argumentCollection = arguments);
 		if (arguments.showCalendar)
 		{
-			if (arguments.extra contains "class=""")
-			{
-				arguments.extra = Replace(arguments.extra, "class=""", "class=""dateinput ");
-			}
-			else
-			{
-				arguments.extra &= " class=""dateinput""";
-			}
+			local.id = arguments.form.getFieldName(arguments.field.name);
+			local.output &= ' <a href="javascript:;" onclick="calSelect(this);return false;" name="calbtn-#local.id#" id="calbtn-#local.id#" title="Click for calendar"><img src="/_media/icons/calendar.gif" alt="Click for calendar" style="vertical-align:middle;" /></a>';
 		}
 
-		arguments.extra &= " data-value=""" & DateFormat(arguments.value, "yyyy-mm-dd") & """";
+		return local.output;
 
-		return super.render(argumentCollection = arguments);
 	}
 
 	private function formatValue(required value)

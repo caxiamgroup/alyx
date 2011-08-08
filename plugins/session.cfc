@@ -20,14 +20,14 @@
 			if (Len(arguments.scope))
 			{
 				if (StructKeyExists(session, variables.storage_key_scoped)
-					and StructKeyExists(session[variables.storage_key_scoped], arguments.scope)
-					and StructKeyExists(session[variables.storage_key_scoped][arguments.scope], arguments.name))
+					&& StructKeyExists(session[variables.storage_key_scoped], arguments.scope)
+					&& StructKeyExists(session[variables.storage_key_scoped][arguments.scope], arguments.name))
 				{
 					exists = true;
 				}
 			}
 			else if (StructKeyExists(session, variables.storage_key_unscoped)
-				and StructKeyExists(session[variables.storage_key_unscoped], arguments.name))
+				&& StructKeyExists(session[variables.storage_key_unscoped], arguments.name))
 			{
 				exists = true;
 			}
@@ -87,14 +87,14 @@
 			if (Len(arguments.scope))
 			{
 				if (StructKeyExists(session, variables.storage_key_scoped)
-					and StructKeyExists(session[variables.storage_key_scoped], arguments.scope)
-					and StructKeyExists(session[variables.storage_key_scoped][arguments.scope], arguments.name))
+					&& StructKeyExists(session[variables.storage_key_scoped], arguments.scope)
+					&& StructKeyExists(session[variables.storage_key_scoped][arguments.scope], arguments.name))
 				{
 					value = session[variables.storage_key_scoped][arguments.scope][arguments.name];
 				}
 			}
 			else if (StructKeyExists(session, variables.storage_key_unscoped)
-				and StructKeyExists(session[variables.storage_key_unscoped], arguments.name))
+				&& StructKeyExists(session[variables.storage_key_unscoped], arguments.name))
 			{
 				value = session[variables.storage_key_unscoped][arguments.name];
 			}
@@ -115,14 +115,14 @@
 			if (Len(arguments.scope))
 			{
 				if (StructKeyExists(session, variables.storage_key_scoped)
-					and StructKeyExists(session[variables.storage_key_scoped], arguments.scope)
-					and StructKeyExists(session[variables.storage_key_scoped][arguments.scope], arguments.name))
+					&& StructKeyExists(session[variables.storage_key_scoped], arguments.scope)
+					&& StructKeyExists(session[variables.storage_key_scoped][arguments.scope], arguments.name))
 				{
 					StructDelete(session[variables.storage_key_scoped][arguments.scope], arguments.name);
 				}
 			}
 			else if (StructKeyExists(session, variables.storage_key_unscoped)
-				and StructKeyExists(session[variables.storage_key_unscoped], arguments.name))
+				&& StructKeyExists(session[variables.storage_key_unscoped], arguments.name))
 			{
 				StructDelete(session[variables.storage_key_unscoped], arguments.name);
 			}
@@ -139,7 +139,7 @@
 			<cfscript>
 
 			if (StructKeyExists(session, variables.storage_key_scoped)
-				and StructKeyExists(session[variables.storage_key_scoped], arguments.scope))
+				&& StructKeyExists(session[variables.storage_key_scoped], arguments.scope))
 			{
 				StructDelete(session[variables.storage_key_scoped], arguments.scope);
 			}

@@ -61,4 +61,10 @@
 		<cfreturn results/>
 	</cffunction>
 
+	<cffunction name="getResultRecordCount" output="no">
+		<cfquery name="local.resultRecordCount">
+			SELECT FOUND_ROWS() AS `rows`;
+		</cfquery>
+		<cfreturn local.resultRecordCount.rows />
+	</cffunction>
 </cfcomponent>

@@ -182,7 +182,7 @@
 		return value;
 	}
 
-	function setFieldValue(required name, required value)
+	function setFieldValue(required name, value = "")
 	{
 		variables.rc[getFieldName(arguments.name)] = arguments.value;
 	}
@@ -290,7 +290,7 @@
 
 	function hasErrors()
 	{
-		return not ArrayIsEmpty(variables.errors);
+		return ! ArrayIsEmpty(variables.errors);
 	}
 
 	function fieldHasErrors(required name)
@@ -329,7 +329,8 @@
 		extra        = "",
 		autocomplete = "",
 		onSubmit     = "return validateForm(this)",
-        useFieldset  = variables.useFieldset
+		useFieldset  = variables.useFieldset,
+		persistURL      = ""
 	)
 	{
 		variables.useFieldset = arguments.useFieldset;
@@ -346,6 +347,38 @@
 		if (arguments.autocomplete == false)
 		{
 			arguments.extra &= " autocomplete=""off""";
+		}
+		if (Len(arguments.persistURL))
+		{
+			local.persistLen = ListLen(arguments.persistURL);
+			if(arguments.method == "post")
+			{
+				local.persists = "";
+				for(local.persistIndex = 1; local.persistIndex <= local.persistLen; ++local.persistIndex)
+				{
+					local.persist = ListGetAt(arguments.persistURL, local.persistIndex);
+					if(StructKeyExists(request.context, local.persist))
+					{
+						local.persists = ListAppend(local.persists, local.persist & "=" & request.context[local.persist], "&");
+					}
+				}
+				if(ListLen(local.persists, "&"))
+				{
+					arguments.action &= "?" & local.persists;
+				}
+			}
+			else if(arguments.method == "get")
+			{
+				local.persistsFields = "";
+				for(local.persistIndex = 1; local.persistIndex <= local.persistLen; ++local.persistIndex)
+				{
+					local.persist = ListGetAt(arguments.persistURL, local.persistIndex);
+					if(StructKeyExists(request.context, local.persist))
+					{
+						local.persistsFields = '<input type="hidden" name="#local.persist#" value="#HtmlEditFormat(request.context[local.persist])#" />';
+					}
+				}
+			}
 		}
 
 		if (Len(arguments.onSubmit))
@@ -373,6 +406,10 @@
 		}
 
 		local.result &= "<input type=""hidden"" name=""form_#variables.name#"" value=""""/>";
+		if(StructKeyExists(local, "persistsFields"))
+		{
+			local.result &= local.persistsFields;
+		}
 
 		return local.result;
 	}
@@ -525,12 +562,20 @@
 	function displayErrors(
 		title = variables.errorHeading,
 		open  = "",
-		close = ""
+		close = "",
+		inline = true
 	)
 	{
 		var local = {};
 
+		if (arguments.inline)
+		{
 		local.output = "<div id=""error-message-#getName()#"">";
+		}
+		else
+		{
+			local.output = "<div>";
+		}
 		if (hasErrors())
 		{
 			local.output &= "<div class=""msg error"">" & arguments.open;
@@ -570,7 +615,8 @@
 		errorOpen    = "",
 		errorClose   = "",
 		successOpen  = "",
-		successClose = ""
+		successClose = "",
+		inline       = true
 	)
 	{
 		var local = {};
@@ -581,7 +627,7 @@
 		}
 		else
 		{
-			local.output = displayErrors(title = arguments.errorTitle, open = arguments.errorOpen, close = arguments.errorClose);
+			local.output = displayErrors(title = arguments.errorTitle, open = arguments.errorOpen, close = arguments.errorClose, inline = arguments.inline);
 		}
 
 		return local.output;

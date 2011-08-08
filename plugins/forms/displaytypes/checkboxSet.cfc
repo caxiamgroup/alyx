@@ -8,7 +8,8 @@
 		value      = arguments.form.getFieldValue(arguments.field.name),
 		dataType   = "dataset",
 		separator  = "<br />",
-		labelExtra = "class=""normal"""
+		labelExtra = "class=""normal""",
+		bitWise = "false"
 	)
 	{
 		var local = {};
@@ -30,13 +31,13 @@
 			local.rowCount = arguments.field.dataset.getCount();
 			for (local.row = 1; local.row <= local.rowCount; ++local.row)
 			{
-				if (arguments.separator == "<li>" || local.row > 1)
+				if (arguments.separator contains "<li" || local.row > 1)
 				{
 					local.output &= arguments.separator;
 				}
 				local.id = arguments.field.dataset.getId(local.row);
 				local.extra = arguments.extra;
-				if (ListFindNoCase(arguments.value, local.id))
+				if (ListFindNoCase(arguments.value, local.id) OR (arguments.bitWise AND BitAnd(VAL(arguments.value), VAL(local.id))))
 				{
 					local.extra &= " checked=""checked""";
 				}
@@ -50,7 +51,7 @@
 				};
 				local.labelArguments.for = arguments.field.name & "-" & local.id;
 				local.output &= ' /> ' & arguments.form.label(argumentCollection = local.labelArguments);
-				if (arguments.separator == "<li>")
+				if (arguments.separator contains "<li")
 				{
 					local.output &= "</li>";
 				}

@@ -5,6 +5,8 @@
 	variables.modules = {};
 	variables.views = {};
 	variables.layouts = {};
+	variables.models = {};
+	variables.controllers = {};
 
 	function init(framework)
 	{
@@ -129,10 +131,10 @@
 			}
 		}
 
-		scanFrameworkDirectory("/alyx/modules/" & arguments.name & "/views", arguments.name, variables.views);
-		scanFrameworkDirectory("/modules/" & arguments.name & "/views", arguments.name, variables.views);
-		scanFrameworkDirectory("/alyx/modules/" & arguments.name & "/layouts", arguments.name, variables.layouts);
-		scanFrameworkDirectory("/modules/" & arguments.name & "/layouts", arguments.name, variables.layouts);
+		scanCFMDirectory("/alyx/modules/" & arguments.name & "/views", arguments.name, variables.views);
+		scanCFMDirectory("/modules/" & arguments.name & "/views", arguments.name, variables.views);
+		scanCFMDirectory("/alyx/modules/" & arguments.name & "/layouts", arguments.name, variables.layouts);
+		scanCFMDirectory("/modules/" & arguments.name & "/layouts", arguments.name, variables.layouts);
 	}
 
 	function getModule(name)
@@ -145,25 +147,73 @@
 		return variables.modules;
 	}
 
-	function scanViewDirectory(path, name)
+	function scanProjectDirectory(path)
 	{
-		scanFrameworkDirectory(
+		var local = {};
+
+		local.viewPath = arguments.path & "/views";
+		local.controllerPath = arguments.path & "/controllers";
+		local.modelsPath = arguments.path & "/models";
+		local.layoutsPath = arguments.path & "/layouts";
+
+		if(directoryExists(ExpandPath(local.viewPath)))
+		{
+			scanViewDirectory(local.viewPath);
+		}
+
+		if(directoryExists(ExpandPath(local.controllerPath)))
+		{
+			scanControllerDirectory(local.controllerPath);
+		}
+
+		if(directoryExists(ExpandPath(local.modelsPath)))
+		{
+			scanModelDirectory(local.modelsPath);
+		}
+
+		if(directoryExists(ExpandPath(local.layoutsPath)))
+		{
+			scanLayoutDirectory(local.layoutsPath);
+		}
+	}
+
+
+	function scanViewDirectory(path, name = "")
+	{
+		scanCFMDirectory(
 			path = arguments.path,
 			name = arguments.name,
 			group = variables.views
 		);
+
 	}
 
-	function scanLayoutDirectory(path, name)
+	function scanLayoutDirectory(path, name = "")
 	{
-		scanFrameworkDirectory(
+		scanCFMDirectory(
 			path = arguments.path,
 			name = arguments.name,
 			group = variables.layouts
 		);
 	}
 
-	function scanFrameworkDirectory(path, name, group)
+	function scanModelDirectory(path)
+	{
+		scanCFCDirectory(
+			path = arguments.path,
+			group = variables.models
+		);
+	}
+
+	function scanControllerDirectory(path)
+	{
+		scanCFCDirectory(
+			path = arguments.path,
+			group = variables.controllers
+		);
+	}
+
+	function scanCFCDirectory(path, group)
 	{
 		var local = {};
 
@@ -171,18 +221,117 @@
 
 		if (DirectoryExists(local.path))
 		{
-			local.views = DirectoryList(local.path, true, "path", "*.cfm");
-			local.numViews = ArrayLen(local.views);
-
-			for (local.index = 1; local.index <= local.numViews; ++local.index)
+			local.CFCs = DirectoryList(local.path, true, "path", "*.cfc");
+			local.numCFCs = ArrayLen(local.CFCs);
+			local.action = Replace(arguments.path, "/", ".", "all");
+			local.action = Replace(local.action, ".", "/",  "one");
+			for (local.index = 1; local.index <= local.numCFCs; ++local.index)
 			{
-				local.file = local.views[local.index];
+				local.file = local.CFCs[local.index];
+				local.file = Replace(local.file, local.path, "");
+				local.file = ReReplace(local.file, "\.cfc$", "");
+				local.file = Replace(local.file, "\", "/", "all");
+				local.file = Replace(local.file, "/", ".", "all");
+				local.key = Replace(local.file, ".", "",  "one");
+
+				arguments.group[local.key] = local.action & local.file;
+			}
+		}
+	}
+
+	function scanCFMDirectory(path, name, group)
+	{
+		var local = {};
+
+		local.path = ExpandPath(arguments.path);
+
+		if (DirectoryExists(local.path))
+		{
+			local.CFMs = DirectoryList(local.path, true, "path", "*.cfm");
+			local.numCFMs = ArrayLen(local.CFMs);
+
+			for (local.index = 1; local.index <= local.numCFMs; ++local.index)
+			{
+				local.file = local.CFMs[local.index];
 				local.file = Replace(local.file, local.path, "");
 				local.file = ReReplace(local.file, "\.cfm$", "");
 				local.file = Replace(local.file, "\", "/", "all");
-				arguments.group[arguments.name & local.file] = arguments.path & local.file;
+				if (!Len(arguments.name))
+				{
+					local.key = Replace(local.file, "/", "", "one");
+					arguments.group[local.key] = arguments.path & local.file;
+				}
+				else
+				{
+					arguments.group[arguments.name & local.file] = arguments.path & local.file;
+				}
 			}
 		}
+	}
+
+	function getModelPath(model)
+	{
+		var local = {};
+
+		local.serviceComponentPath = "";
+		local.path = ListChangeDelims(arguments.model, "/", ".");
+		local.action = ListChangeDelims(arguments.model, ".", "/");
+		local.componentName = ListLast(local.path, "/");
+		local.serviceAction = local.action & "." & local.componentName & "Service";
+
+		if (FileExists(ExpandPath("/models/" & local.path & "/" & local.componentName & "Service.cfc")))
+		{
+			local.serviceComponentPath = "/models." & local.serviceAction;
+		}
+		else if (StructKeyExists(variables.models, local.serviceAction))
+		{
+			local.serviceComponentPath = variables.models[local.serviceAction];
+		}
+		else if (ListLen(local.action, ".") > 1)
+		{
+			local.moduleName = ListFirst(arguments.model, ".");
+			local.modules = application.controller.getModules();
+
+			if (StructKeyExists(local.modules, local.moduleName))
+			{
+				if (FileExists(ExpandPath("/alyx/modules/" & local.modules[local.moduleName].name & "/models/" & local.componentName & "/" & local.componentName & "Service.cfc")))
+				{
+					local.serviceComponentPath = "/alyx.modules." & local.modules[local.moduleName].name & ".models." & local.componentName & "." & local.componentName & "Service";
+				}
+			}
+		}
+
+		return local.serviceComponentPath;
+	}
+
+	function getControllerPath(controller)
+	{
+		var local = {};
+
+		local.controllerPath = "";
+		local.path = ListChangeDelims(arguments.controller, "/", ".");
+
+		if (FileExists(ExpandPath("/controllers/" & local.path & ".cfc")))
+		{
+			local.controllerPath = "/controllers." & arguments.controller;
+		}
+		else if(StructKeyExists(variables.controllers, arguments.controller))
+		{
+			local.controllerPath = variables.controllers[arguments.controller];
+		}
+		else
+		{
+			for (local.module in application.controller.getModules())
+			{
+				if (FileExists(ExpandPath("/alyx/modules/" & local.module & "/controllers/" & local.path & ".cfc")))
+				{
+					local.controllerPath = "/alyx.modules." & local.module & ".controllers." & arguments.controller;
+					break;
+				}
+			}
+		}
+
+		return local.controllerPath;
 	}
 
 	function getViewPath(view)

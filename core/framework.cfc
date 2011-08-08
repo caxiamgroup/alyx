@@ -54,6 +54,10 @@
 			request.layout = variables.framework.defaultLayout;
 		}
 
+		if (not StructKeyExists(request, "rendering"))
+		{
+			request.rendering = "html";
+		}
 		if (not StructKeyExists(request, "view"))
 		{
 			request.view = request.action;
@@ -302,27 +306,7 @@
 				}
 				else
 				{
-					local.servicePath = "";
-					local.path = ListChangeDelims(arguments.name, "/", ".");
-					local.componentName = ListLast(local.path, "/");
-
-					if (FileExists(ExpandPath("/models/" & local.path & "/" & local.componentName & "Service.cfc")))
-					{
-						local.servicePath = "/models." & arguments.name & "." & local.componentName & "Service";
-					}
-					else if (ListLen(arguments.name, ".") > 1)
-					{
-						local.moduleName = ListFirst(arguments.name, ".");
-						local.modules = application.controller.getModules();
-
-						if (StructKeyExists(local.modules, local.moduleName))
-						{
-							if (FileExists(ExpandPath("/alyx/modules/" & local.moduleName & "/models/" & local.componentName & "/" & local.componentName & "Service.cfc")))
-							{
-								local.servicePath = "/alyx.modules." & local.moduleName & ".models." & local.componentName & "." & local.componentName & "Service";
-							}
-						}
-					}
+					local.servicePath = application.controller.getModelPath(model = arguments.name);
 
 					if (Len(local.servicePath))
 					{
@@ -362,24 +346,7 @@
 				}
 				else
 				{
-					local.controllerPath = "";
-					local.path = ListChangeDelims(local.name, "/", ".");
-
-					if (FileExists(ExpandPath("/controllers/" & local.path & ".cfc")))
-					{
-						local.controllerPath = "/controllers." & local.name;
-					}
-					else
-					{
-						for (local.module in application.controller.getModules())
-						{
-							if (FileExists(ExpandPath("/alyx/modules/" & local.module & "/controllers/" & local.path & ".cfc")))
-							{
-								local.controllerPath = "/alyx.modules." & local.module & ".controllers." & local.name;
-								break;
-							}
-						}
-					}
+					local.controllerPath = Application.controller.getControllerPath(local.name);
 
 					if (Len(local.controllerPath))
 					{
@@ -407,7 +374,7 @@
 		<cfargument name="view" required="false"/>
 		<cfargument name="action" required="false"/>
 		<cfargument name="vc" default="#StructNew()#"/>
-
+		<cfset var local = StructNew() />
 		<cfif StructKeyExists(arguments, "action")>
 			<cfset arguments.controller = getController(arguments.action)/>
 			<cfset arguments.method = ListLast(arguments.action, ".")/>
@@ -423,7 +390,7 @@
 					<cfinvoke component="#arguments.controller#" method="onBeforeControllerMethod" rc="#request.context#" vc="#arguments.vc#" methodName="#arguments.method#"/>
 				</cfif>
 
-				<cfinvoke component="#arguments.controller#" method="#arguments.method#" rc="#request.context#" vc="#arguments.vc#"/>
+				<cfinvoke component="#arguments.controller#" returnvariable="local.controllerReturn" method="#arguments.method#" rc="#request.context#" vc="#arguments.vc#"/>
 
 				<cfif StructKeyExists(arguments.controller, "onAfterControllerMethod")>
 					<cfinvoke component="#arguments.controller#" method="onAfterControllerMethod" rc="#request.context#" vc="#arguments.vc#" methodName="#arguments.method#"/>
@@ -435,6 +402,9 @@
 					<cfrethrow/>
 				</cfcatch>
 			</cftry>
+		</cfif>
+		<cfif StructKeyExists(local, "controllerReturn")>
+			<cfreturn local.controllerReturn />
 		</cfif>
 	</cffunction>
 
@@ -458,7 +428,7 @@
 
 			<cfset local.view = request.view/>
 
-			<cfset runControllerMethod(action = arguments.action, vc = local.vc)/>
+			<cfset local.controllerResult = runControllerMethod(action = arguments.action, vc = local.vc)/>
 
 			<cfif request.view neq local.view>
 				<cfset local.temp = request.view/>
@@ -474,13 +444,22 @@
 		<cfelseif not StructKeyExists(arguments, "path")>
 			<cfthrow message="Missing arguments"/>
 		</cfif>
+		<cfset local.path = arguments.path />
+		<cfinvoke
+			method="renderAs#request.rendering#"
+			argumentCollection = "#local#"
+			returnVariable = "local.content"
+		/>
+		<cfreturn local.content/>
+	</cffunction>
 
+	<cffunction name="_renderAsHTML">
 		<cfparam name="request.viewDepth" default="0"/>
 		<cfset ++request.viewDepth/>
 
 		<cfif Len(arguments.path)>
 			<cftry>
-				<cfset local.content = renderView(path = arguments.path, vc = local.vc)/>
+				<cfset local.content = renderView(path = arguments.path, vc = arguments.vc)/>
 
 				<cfcatch type="MissingInclude">
 					<cfif request.viewDepth eq 1>
@@ -490,10 +469,33 @@
 					</cfif>
 				</cfcatch>
 			</cftry>
+		<cfelseif StructKeyExists(arguments, "content")>
+			<cfset local.content = arguments.content/>
 		</cfif>
 
 		<cfset --request.viewDepth/>
+		<cfreturn local.content/>
+	</cffunction>
 
+	<cffunction name="_renderAsJSON">
+		<cfif !StructKeyExists(arguments, "controllerResult")>
+			<cfset arguments.controllerResult = arguments.vc />
+		</cfif>
+		<cftry>
+			<cfset local.content = application.controller.renderContent(content = Serializejson(arguments.controllerResult), type = "application/json" ) />
+		<cfcatch>
+			<cfthrow message="The value returned from the controller is an invalid string. #cfcatch.message#" />
+		</cfcatch>
+		</cftry>
+		<cfreturn local.content/>
+	</cffunction>
+	<cffunction name="_renderAsXML">
+		<cftry>
+			<cfset local.content = application.controller.renderContent(content = ToString(arguments.controllerResult), type = "text/xml" ) />
+		<cfcatch>
+			<cfthrow message="The value returned from the controller is an invalid string. #cfcatch.message#" />
+		</cfcatch>
+		</cftry>
 		<cfreturn local.content/>
 	</cffunction>
 
@@ -528,21 +530,54 @@
 	<cffunction name="redirect" output="no">
 		<cfargument name="action" required="yes"/>
 		<cfargument name="persist" default=""/>
+		<cfargument name="urlParams" default="" hint="Query String and hash appended to the redirect. This value will param keys not specified int he persists URL but undefined in the rc."/>
 		<cfargument name="persistUrl" default=""/>
 
 		<cfif Len(arguments.persist)>
 			<cfset storePersistentContext(arguments.persist)>
 		</cfif>
 
+		<cfif Len(arguments.urlParams) OR Len(arguments.persistUrl)>
+			<cfset local.urlParams = ListToArray(ListLast(arguments.urlParams, "?"), "&") />
+		</cfif>
+		<cfif Len(arguments.urlParams)>
+			<cfset local.urlParamsLen = ArrayLen(local.urlParams) />
+			<cfloop from="1" to="#local.urlParamsLen#" index="local.urlParamIndex">
+				<cfset local.urlParam = local.urlParams[local.urlParamIndex] />
+				<cfset local.urlParamKey = ListFirst(local.urlParam, "=") />
+				<cfset localPersistsIndex = ListFindNocase(arguments.persistUrl, local.urlParamKey) />
+				<cfif localPersistsIndex AND StructKeyExists(request.context, local.urlParamKey)>
+					<cfset arguments.persistUrl = ListDeleteAt(arguments.persistUrl, localPersistsIndex) />
+				</cfif>
+			</cfloop>
+		</cfif>
+
 		<cfif Len(arguments.persistUrl)>
-			<cfset arguments.persistUrl = "?" & arguments.persistUrl>
+			<cfset local.persistUrl = ListToArray(arguments.persistUrl) />
+			<cfloop array="#local.persistUrl#" index="local.currentPersistURL">
+				<cfif StructKeyExists(request.context, local.currentPersistURL)>
+					<cfset ArrayPrepend(local.urlParams, local.currentPersistURL & "=" & request.context[local.currentPersistURL]) />
+				</cfif>
+			</cfloop>
+		</cfif>
+
+		<cfif StructKeyExists(local, "urlParams")>
+			<cfset arguments.urlParams = "?" & ArrayToList(local.urlParams, "&") />
+		</cfif>
+
+		<cfif (ListLen(arguments.action, ".") GT 1)>
+			<cfif (ListFirst(arguments.action,".") EQ "general")>
+				<cfset arguments.action = ListRest(arguments.action, ".") />
+			</cfif>
+
+			<cfset arguments.action = "/" & ListChangeDelims(arguments.action, "/", ".") />
 		</cfif>
 
 		<cfif Len(arguments.action) && Right(arguments.action, 1) neq "/">
 			<cfset arguments.action &= ".cfm"/>
 		</cfif>
 
-		<cflocation url="#arguments.action##arguments.persistUrl#" addtoken="no"/>
+		<cflocation url="#arguments.action##arguments.urlParams#" addtoken="no"/>
 	</cffunction>
 
 	<cffunction name="storePersistentContext" access="public" output="no">

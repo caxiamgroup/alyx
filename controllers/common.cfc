@@ -85,6 +85,18 @@
 		request.view = arguments.name;
 	}
 
+	function renderJson()
+	{
+		request.rendering = "json";
+	}
+	function renderXML()
+	{
+		request.rendering = "xml";
+	}
+	function setNoLayout()
+	{
+		setLayout("");
+	}
 	function setNoRender()
 	{
 		setLayout("");
